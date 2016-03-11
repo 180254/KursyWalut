@@ -102,12 +102,11 @@
       <DependentUpon>MainPage.xaml</DependentUpon>
     </Compile>
     <Compile Include="Provider\Currency.cs" />
-    <Compile Include="Provider\ExchangeRatesCache.cs" />
-    <Compile Include="Provider\NBP\CurrencyStore.cs" />
+    <Compile Include="Provider\ExchangeRatesCacher.cs" />
     <Compile Include="Provider\ExchangeRate.cs" />
     <Compile Include="Provider\IExchangeRatesProvider.cs" />
-    <Compile Include="Provider\NBP\NbpExchangeRatesProvider.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="Provider\NbpExchangeRatesProvider.cs" />
   </ItemGroup>
   <ItemGroup>
     <AppxManifest Include="Package.appxmanifest">
