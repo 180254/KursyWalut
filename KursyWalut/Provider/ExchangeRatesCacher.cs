@@ -18,7 +18,7 @@ namespace KursyWalut.Provider
         private readonly IDictionary<DateTime, IList<ExchangeRate>> _dailyExchangeRates
             = new Dictionary<DateTime, IList<ExchangeRate>>();
 
-        private readonly IDictionary<Tuple<Currency, DateTime>, ExchangeRate> _dailyCurrencyExchangeRate
+        private readonly IDictionary<Tuple<Currency, DateTime>, ExchangeRate> _dailyCurrencyExchangeRates
             = new Dictionary<Tuple<Currency, DateTime>, ExchangeRate>();
 
         private readonly IDictionary<Tuple<Currency, DateTime, DateTime>, IList<ExchangeRate>> _exchangeRatesHistory
@@ -46,21 +46,21 @@ namespace KursyWalut.Provider
         public async Task<IList<DateTime>> GetAvailableDates(int year)
         {
             return await GetFromDictOrCalculate(_availableDates, year,
-                async () => await _exchangeRatesProvider.GetAvailableDates(year));
+                () => _exchangeRatesProvider.GetAvailableDates(year));
         }
 
 
         public async Task<IList<ExchangeRate>> GetExchangeRates(DateTime day)
         {
             return await GetFromDictOrCalculate(_dailyExchangeRates, day,
-                async () => await _exchangeRatesProvider.GetExchangeRates(day));
+                () => _exchangeRatesProvider.GetExchangeRates(day));
         }
 
         public async Task<ExchangeRate> GetExchangeRate(Currency currency, DateTime day)
         {
             var tuple = Tuple.Create(currency, day);
-            return await GetFromDictOrCalculate(_dailyCurrencyExchangeRate, tuple,
-                async () => await _exchangeRatesProvider.GetExchangeRate(currency, day));
+            return await GetFromDictOrCalculate(_dailyCurrencyExchangeRates, tuple,
+                () => _exchangeRatesProvider.GetExchangeRate(currency, day));
         }
 
         public async Task<IList<ExchangeRate>> GetExchangeRateHistory(
@@ -68,7 +68,7 @@ namespace KursyWalut.Provider
         {
             var tuple = Tuple.Create(currency, startDay, stopDay);
             return await GetFromDictOrCalculate(_exchangeRatesHistory, tuple,
-                async () => await _exchangeRatesProvider.GetExchangeRateHistory(currency, startDay, stopDay));
+                () => _exchangeRatesProvider.GetExchangeRateHistory(currency, startDay, stopDay));
         }
 
         public IDisposable Subscribe(IObserver<int> observer)
@@ -84,7 +84,6 @@ namespace KursyWalut.Provider
             {
                 if (dict.ContainsKey(key))
                     return dict[key];
-
 
                 var value = await supplier.Invoke();
                 dict.Add(key, value);
