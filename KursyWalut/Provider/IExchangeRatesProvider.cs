@@ -22,9 +22,11 @@ namespace KursyWalut.Provider
         Task<ExchangeRate> GetExchangeRate(Currency currency, DateTime day);
 
         /// <exception cref="T:System.ArgumentException">Invalid currency.</exception>
-        /// <exception cref="T:System.ArgumentException">Start year was not returned by GetAvailableYears().</exception>
-        /// <exception cref="T:System.ArgumentException">End year was not returned by GetAvailableYears().</exception>
-        /// <exception cref="T:System.ArgumentException">Start day > stop day.</exception>
+        /// <exception cref="T:System.ArgumentException">Start.year was not returned by GetAvailableYears().</exception>
+        /// <exception cref="T:System.ArgumentException">End.year was not returned by GetAvailableYears().</exception>
+        /// <exception cref="T:System.ArgumentException">Start.day &lt; first GetAvailableDates(start.year).</exception>
+        /// <exception cref="T:System.ArgumentException">End.day &gt; last GetAvailableDates(end.year).</exception>
+        /// <exception cref="T:System.ArgumentException">Start.day &gt; stop.day.</exception>
         /// <exception cref="T:System.IO.IOException">Something go wrong with I/O.</exception>
         Task<IList<ExchangeRate>> GetExchangeRateHistory(Currency currency, DateTime startDay, DateTime stopDay);
     }
