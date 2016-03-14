@@ -10,10 +10,16 @@ namespace KursyWalut.Provider
         private readonly Semaphore _lock = new Semaphore(1, 1);
         private readonly IExchangeRatesProvider _exchangeRatesProvider;
 
-        private IList<DateTime> _availableDates;
+        private IList<int> _availableYears;
+
+        private readonly IDictionary<int, IList<DateTime>> _availableDates
+            = new Dictionary<int, IList<DateTime>>();
 
         private readonly IDictionary<DateTime, IList<ExchangeRate>> _dailyExchangeRates
             = new Dictionary<DateTime, IList<ExchangeRate>>();
+
+        private readonly IDictionary<Tuple<Currency, DateTime>, ExchangeRate> _dailyCurrencyExchangeRate
+            = new Dictionary<Tuple<Currency, DateTime>, ExchangeRate>();
 
         private readonly IDictionary<Tuple<Currency, DateTime, DateTime>, IList<ExchangeRate>> _exchangeRatesHistory
             = new Dictionary<Tuple<Currency, DateTime, DateTime>, IList<ExchangeRate>>();
@@ -23,66 +29,72 @@ namespace KursyWalut.Provider
             _exchangeRatesProvider = exchangeRatesProvider;
         }
 
-        public async Task<IList<DateTime>> GetAvailableDates()
+        public async Task<IList<int>> GetAvailableYears()
         {
             _lock.WaitOne();
 
             try
             {
-                return _availableDates ?? (_availableDates = await _exchangeRatesProvider.GetAvailableDates());
+                return _availableYears ?? (_availableYears = await _exchangeRatesProvider.GetAvailableYears());
             }
             finally
             {
                 _lock.Release();
             }
         }
+
+        public async Task<IList<DateTime>> GetAvailableDates(int year)
+        {
+            return await GetFromDictOrCalculate(_availableDates, year,
+                async () => await _exchangeRatesProvider.GetAvailableDates(year));
+        }
+
 
         public async Task<IList<ExchangeRate>> GetExchangeRates(DateTime day)
         {
-            _lock.WaitOne();
-
-            try
-            {
-                if (_dailyExchangeRates.ContainsKey(day))
-                    return _dailyExchangeRates[day];
-
-                var exchangeRates = await _exchangeRatesProvider.GetExchangeRates(day);
-                _dailyExchangeRates.Add(day, exchangeRates);
-
-                return exchangeRates;
-            }
-            finally
-            {
-                _lock.Release();
-            }
+            return await GetFromDictOrCalculate(_dailyExchangeRates, day,
+                async () => await _exchangeRatesProvider.GetExchangeRates(day));
         }
 
-        public async Task<IList<ExchangeRate>> GetExchangeRatesHistory(
+        public async Task<ExchangeRate> GetExchangeRate(Currency currency, DateTime day)
+        {
+            var tuple = Tuple.Create(currency, day);
+            return await GetFromDictOrCalculate(_dailyCurrencyExchangeRate, tuple,
+                async () => await _exchangeRatesProvider.GetExchangeRate(currency, day));
+        }
+
+        public async Task<IList<ExchangeRate>> GetExchangeRateHistory(
             Currency currency, DateTime startDay, DateTime stopDay)
         {
-            _lock.WaitOne();
-
-            try
-            {
-                var tuple = Tuple.Create(currency, startDay, stopDay);
-
-                if (_exchangeRatesHistory.ContainsKey(tuple))
-                    return _exchangeRatesHistory[tuple];
-
-                var exchangeRates = await _exchangeRatesProvider.GetExchangeRatesHistory(currency, startDay, stopDay);
-                _exchangeRatesHistory.Add(tuple, exchangeRates);
-
-                return exchangeRates;
-            }
-            finally
-            {
-                _lock.Release();
-            }
+            var tuple = Tuple.Create(currency, startDay, stopDay);
+            return await GetFromDictOrCalculate(_exchangeRatesHistory, tuple,
+                async () => await _exchangeRatesProvider.GetExchangeRateHistory(currency, startDay, stopDay));
         }
 
         public IDisposable Subscribe(IObserver<int> observer)
         {
             return _exchangeRatesProvider.Subscribe(observer);
+        }
+
+        private async Task<TV> GetFromDictOrCalculate<TK, TV>(IDictionary<TK, TV> dict, TK key, Func<Task<TV>> supplier)
+        {
+            _lock.WaitOne();
+
+            try
+            {
+                if (dict.ContainsKey(key))
+                    return dict[key];
+
+
+                var value = await supplier.Invoke();
+                dict.Add(key, value);
+
+                return value;
+            }
+            finally
+            {
+                _lock.Release();
+            }
         }
     }
 }
