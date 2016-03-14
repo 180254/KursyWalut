@@ -14,40 +14,34 @@ namespace KursyWalut.Provider
 {
     internal class NbpExchangeRatesProvider : IExchangeRatesProvider
     {
+        private readonly Semaphore _lock = new Semaphore(1, 1);
         private readonly Encoding _utf8;
         private readonly Encoding _iso88592;
-        private readonly Semaphore _lock = new Semaphore(1, 1);
 
-        private readonly IList<IObserver<int>> _observers = new List<IObserver<int>>();
-        private readonly IDictionary<DateTime, string> _dateToFilename = new Dictionary<DateTime, string>();
+        // -----------------------------------------------------------------------------------------
+
+        private readonly IList<IObserver<int>> _observers;
+
+        private readonly IDictionary<int, IList<DateTime>> _yearToDays;
+        private readonly IDictionary<DateTime, string> _dayToFilename;
+        private readonly IDictionary<string, IList<ExchangeRate>> _filenameToEr;
+
+        // -----------------------------------------------------------------------------------------
 
         public NbpExchangeRatesProvider()
         {
             Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
             _utf8 = Encoding.UTF8;
             _iso88592 = Encoding.GetEncoding("ISO-8859-2");
+
+            _observers = new List<IObserver<int>>();
+
+            _yearToDays = new Dictionary<int, IList<DateTime>>();
+            _dayToFilename = new Dictionary<DateTime, string>();
+            _filenameToEr = new Dictionary<string, IList<ExchangeRate>>();
         }
 
-        /// <exception cref="T:System.IO.IOException">Response unavailable or in unexpected format.</exception>
-        public async Task<IList<DateTime>> GetAvailableDates()
-        {
-            return await GetAvailableDates2(ProgressNotify.Master);
-        }
-
-        /// <exception cref="T:System.ArgumentException">Day was not returned by GetAvailableDates().</exception>
-        /// <exception cref="T:System.IO.IOException">Response unavailable or in unexpected format.</exception>
-        public async Task<IList<ExchangeRate>> GetExchangeRates(DateTime day)
-        {
-            return await GetExchangeRates2(day, ProgressNotify.Master);
-        }
-
-        /// <exception cref="T:System.ArgumentException">????</exception>
-        /// <exception cref="T:System.IO.IOException">Response unavailable or in unexpected format.</exception>
-        public async Task<IList<ExchangeRate>> GetExchangeRatesHistory(
-            Currency currency, DateTime startDay, DateTime stopDay)
-        {
-            return await GetExchangeRatesHistory2(currency, startDay, stopDay, ProgressNotify.Master);
-        }
+        // -----------------------------------------------------------------------------------------
 
         public IDisposable Subscribe(IObserver<int> observer)
         {
@@ -55,8 +49,56 @@ namespace KursyWalut.Provider
             return new ObserverDisposable(this, observer);
         }
 
+        // -----------------------------------------------------------------------------------------
+
+        public async Task<IList<int>> GetAvailableYears()
+        {
+            return await GetAvailableYears2(ProgressNotify.Master);
+        }
+
+        public async Task<IList<DateTime>> GetAvailableDates(int year)
+        {
+            return await GetAvailableDates2(year, ProgressNotify.Master);
+        }
+
+        public  Task<DateTime> GetFirstAvailableDate()
+        {
+            throw new NotImplementedException();
+        }
+
+        public  Task<DateTime> GetLastAvailableDate()
+        {
+            throw new NotImplementedException();
+        }
+
+        public async Task<IList<ExchangeRate>> GetExchangeRates(DateTime day)
+        {
+            return await GetExchangeRates2(day, ProgressNotify.Master);
+        }
+
+        public async Task<ExchangeRate> GetExchangeRate(Currency currency, DateTime day)
+        {
+            return await GetExchangeRate2(currency, day, ProgressNotify.Master);
+        }
+
+        public async Task<IList<ExchangeRate>> GetExchangeRateHistory(
+            Currency currency, DateTime startDay, DateTime stopDay)
+        {
+            return await GetExchangeRateHistory2(currency, startDay, stopDay, ProgressNotify.Master);
+        }
+
+        // -----------------------------------------------------------------------------------------
+
+        /// internal version of GetAvailableYears; customizable lock, and progress start/stop value
+        private async Task<IList<int>> GetAvailableYears2(ProgressNotify p)
+        {
+            const int startYear = 2002;
+            var endYear = DateTime.Now.Year;
+            return await Task.Run(() => Enumerable.Range(startYear, endYear - startYear +1).ToImmutableList());
+        }
+
         /// internal version of GetAvailableDate; customizable lock, and progress start/stop value
-        private async Task<IList<DateTime>> GetAvailableDates2(ProgressNotify p)
+        private async Task<IList<DateTime>> GetAvailableDates2(int year, ProgressNotify p)
         {
             if (p.IsMaster) _lock.WaitOne();
 
@@ -64,25 +106,42 @@ namespace KursyWalut.Provider
             {
                 NotifyObservers(p.Start);
 
-                var dir = await GetHttpResponse("http://www.nbp.pl/kursy/xml/dir.txt", _utf8);
-                var filenames = ParseFilenames(dir);
+                if (_yearToDays.ContainsKey(year))
+                {
+                    NotifyObservers(p.Stop);
+                    return _yearToDays[year];
+                }
 
+                var partProgress = CalculateProgress(p, 10);
+                var availableYears = await GetAvailableYears2(new ProgressNotify(p.Start, partProgress));
+                var first = availableYears.First(y => y.Equals(year)); // possible InvalidOperationException
+                NotifyObservers(partProgress);
+
+                var yearS = year == DateTime.Now.Year ? "" : year.ToString();
+                var dir = await GetHttpResponse("http://www.nbp.pl/kursy/xml/dir" + yearS + ".txt", _utf8);
+                var filenames = ParseFilenames(dir);
                 NotifyObservers(CalculateProgress(p, 70));
-                _dateToFilename.Clear();
 
                 var result = new List<DateTime>();
                 foreach (var filename in filenames.Where(f => f.StartsWith("a")))
                 {
                     var day = ParseDateTime(filename);
-                    _dateToFilename.Add(day, filename);
+                    _dayToFilename.Add(day, filename);
                     result.Add(day);
                 }
 
+                _yearToDays.Add(year, result);
                 NotifyObservers(p.Stop);
+
                 return result.AsReadOnly();
             }
 
-            catch (Exception ex)
+            catch (Exception ex) when (ex is InvalidOperationException)
+            {
+                if (p.IsMaster) NotifyObservers(-1);
+                throw new ArgumentException("year was not returned by GetAvailableYears()");
+            }
+            catch (Exception ex) when (!(ex is ArgumentException || ex is IOException))
             {
                 if (p.IsMaster) NotifyObservers(-1);
                 throw new IOException("response unavailable or in unexpected format", ex);
@@ -101,13 +160,25 @@ namespace KursyWalut.Provider
             try
             {
                 NotifyObservers(p.Start);
-                var filename = _dateToFilename[day];
 
+                if (_dayToFilename.ContainsKey(day))
+                    if (_filenameToEr.ContainsKey(_dayToFilename[day]))
+                    {
+                        NotifyObservers(p.Stop);
+                        return _filenameToEr[_dayToFilename[day]];
+                    }
+
+                var partProgress = CalculateProgress(p, 30);
+                await GetAvailableDates2(day.Year, new ProgressNotify(p.Start, partProgress));
+                NotifyObservers(partProgress);
+
+                var filename = _dayToFilename[day]; // possible KeyNotFoundException
                 var response = await GetHttpResponse("http://www.nbp.pl/kursy/xml/" + filename + ".xml", _iso88592);
                 var xml = XDocument.Load(new StringReader(response));
                 NotifyObservers(CalculateProgress(p, 70));
 
                 var exchangeRates = ParseExchangeRates(xml, day);
+                _filenameToEr.Add(filename, exchangeRates);
                 NotifyObservers(p.Stop);
 
                 return exchangeRates;
@@ -116,12 +187,42 @@ namespace KursyWalut.Provider
             catch (Exception ex) when (ex is KeyNotFoundException)
             {
                 if (p.IsMaster) NotifyObservers(-1);
-                throw new ArgumentException("day was not returned by GetAvailableDates()");
+                throw new ArgumentException("day was not returned by GetAvailableDates(day.year)");
             }
-            catch (Exception ex)
+            catch (Exception ex) when (!(ex is ArgumentException || ex is IOException))
             {
                 if (p.IsMaster) NotifyObservers(-1);
                 throw new IOException("response unavailable or in unexpected format", ex);
+            }
+            finally
+            {
+                if (p.IsMaster) _lock.Release();
+            }
+        }
+
+        /// internal version of GetExchangeRate; customizable lock, and progress start/stop value
+        private async Task<ExchangeRate> GetExchangeRate2(Currency currency, DateTime day, ProgressNotify p)
+        {
+            if (p.IsMaster) _lock.WaitOne();
+
+            try
+            {
+                NotifyObservers(p.Start);
+
+                var partProgress = CalculateProgress(p, 70);
+                var exchangeRates2 = await GetExchangeRates2(day, new ProgressNotify(p.Start, partProgress));
+
+                NotifyObservers(partProgress);
+                var exchangeRate = exchangeRates2.First(e => e.Currency.Equals(currency)); // possible InvalidOperationException
+
+                NotifyObservers(p.Stop);
+                return exchangeRate;
+            }
+
+            catch (Exception ex) when (ex is InvalidOperationException)
+            {
+                if (p.IsMaster) NotifyObservers(-1);
+                throw new ArgumentException("invalid currency");
             }
             finally
             {
@@ -130,7 +231,7 @@ namespace KursyWalut.Provider
         }
 
         /// internal version of GetExchangeRatesHistory; customizable lock, and progress start/stop value
-        private async Task<IList<ExchangeRate>> GetExchangeRatesHistory2(
+        private async Task<IList<ExchangeRate>> GetExchangeRateHistory2(
             Currency currency, DateTime startDay, DateTime stopDay, ProgressNotify p)
         {
             if (p.IsMaster) _lock.WaitOne();
@@ -139,20 +240,33 @@ namespace KursyWalut.Provider
             {
                 NotifyObservers(p.Start);
 
-                var days = _dateToFilename
+                var progress = p.Start;
+
+                var startYear = startDay.Year;
+                var stopYear = stopDay.Year;
+                var partProgress = CalculateProgress(p, 30);
+                var progressPerYear = (partProgress - p.Start)/(stopYear - startYear + 1);
+                for (var year = startYear; year <= stopYear; year++)
+                {
+                    await GetAvailableDates2(year, new ProgressNotify(progress, progress + progressPerYear));
+                    progress += progressPerYear;
+                    NotifyObservers(progress);
+                }
+                NotifyObservers(partProgress);
+
+                var days = _dayToFilename
                     .Where(s => s.Key >= startDay && s.Key <= stopDay)
                     .Select(s => s.Key)
                     .OrderBy(day => day);
 
-                var progressPerDay = (p.Stop + p.Start)/days.Count();
-                var progress = p.Start;
-
+                var progressPerDay = (p.Stop - progress)/days.Count();
                 var result = new List<ExchangeRate>();
                 foreach (var dateTime in days)
                 {
                     var exchangeRates =
                         await GetExchangeRates2(dateTime, new ProgressNotify(progress, progress + progressPerDay));
                     var exchangeRate = exchangeRates.First(e => e.Currency.Equals(currency));
+
                     result.Add(exchangeRate);
                     progress += progressPerDay;
                     NotifyObservers(progress);
@@ -161,7 +275,7 @@ namespace KursyWalut.Provider
                 return result.AsReadOnly();
             }
 
-            catch (Exception ex)
+            catch (Exception ex) when (!(ex is ArgumentException || ex is IOException))
             {
                 if (p.IsMaster) NotifyObservers(-1);
                 throw new IOException("response unavailable or in unexpected format", ex);
@@ -171,6 +285,8 @@ namespace KursyWalut.Provider
                 if (p.IsMaster) _lock.Release();
             }
         }
+
+        // -----------------------------------------------------------------------------------------
 
         /// <exception cref="T:System.Exception">If something go wrong.</exception>
         private async Task<string> GetHttpResponse(string requestUri, Encoding encoding)
@@ -254,6 +370,22 @@ namespace KursyWalut.Provider
                 throw new FormatException("xContainer is in invalid format");
             }
         }
+
+        // -----------------------------------------------------------------------------------------
+
+
+        private async Task<TV> ComputerIfAbsent<TK, TV>(IDictionary<TK, TV> dict, TK key, Func<Task<TV>> supplier)
+        {
+            if (dict.ContainsKey(key))
+                return dict[key];
+
+            var value = await supplier.Invoke();
+            dict.Add(key, value);
+
+            return value;
+        }
+
+        // -----------------------------------------------------------------------------------------
 
         private int CalculateProgress(ProgressNotify p, int percentDone)
         {
