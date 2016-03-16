@@ -7,34 +7,14 @@ namespace KursyWalut.Provider
     internal interface IExchangeRatesProvider : IObservable<int>
     {
         /// <exception cref="T:System.IO.IOException">Something go wrong with I/O.</exception>
-        Task<IList<int>> GetAvailableYears();
+        Task<IList<int>> GetAvailableYears(Progress p);
 
         /// <exception cref="T:System.ArgumentException">Year was not returned by GetAvailableYears().</exception>
         /// <exception cref="T:System.IO.IOException">Something go wrong with I/O.</exception>
-        Task<IList<DateTime>> GetAvailableDates(int year);
+        Task<IList<DateTime>> GetAvailableDays(int year, Progress p);
 
+        /// <exception cref="T:System.ArgumentException">Day was not returned by GetAvailableDays(day.year).</exception>
         /// <exception cref="T:System.IO.IOException">Something go wrong with I/O.</exception>
-        Task<DateTime> GetFirstAvailableDate();
-
-        /// <exception cref="T:System.IO.IOException">Something go wrong with I/O.</exception>
-        Task<DateTime> GetLastAvailableDate();
-
-        /// <exception cref="T:System.ArgumentException">Day was not returned by GetAvailableDates(day.year).</exception>
-        /// <exception cref="T:System.IO.IOException">Something go wrong with I/O.</exception>
-        Task<IList<ExchangeRate>> GetExchangeRates(DateTime day);
-
-        /// <exception cref="T:System.ArgumentException">Invalid currency.</exception>
-        /// <exception cref="T:System.ArgumentException">Day was not returned by GetAvailableDates(day.year).</exception>
-        /// <exception cref="T:System.IO.IOException">Something go wrong with I/O.</exception>
-        Task<ExchangeRate> GetExchangeRate(Currency currency, DateTime day);
-
-        /// <exception cref="T:System.ArgumentException">Invalid currency.</exception>
-        /// <exception cref="T:System.ArgumentException">Start.day &gt; stop.day.</exception>
-        /// <exception cref="T:System.ArgumentException">Start.year was not returned by GetAvailableYears().</exception>
-        /// <exception cref="T:System.ArgumentException">End.year was not returned by GetAvailableYears().</exception>
-        /// <exception cref="T:System.ArgumentException">Start.day &lt; GetFirstAvailableDate().</exception>
-        /// <exception cref="T:System.ArgumentException">End.day &gt; GetLastvailableDate().</exception>
-        /// <exception cref="T:System.IO.IOException">Something go wrong with I/O.</exception>
-        Task<IList<ExchangeRate>> GetExchangeRateHistory(Currency currency, DateTime startDay, DateTime stopDay);
+        Task<IList<ExchangeRate>> GetExchangeRates(DateTime day, Progress p);
     }
 }
