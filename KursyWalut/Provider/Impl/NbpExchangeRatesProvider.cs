@@ -10,7 +10,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using System.Xml.Linq;
 
-namespace KursyWalut.Provider
+namespace KursyWalut.Provider.Impl
 {
     internal class NbpExchangeRatesProvider : IExchangeRatesProvider
     {
@@ -21,7 +21,6 @@ namespace KursyWalut.Provider
         // -----------------------------------------------------------------------------------------
 
         private readonly IList<IObserver<int>> _observers;
-
         private readonly IDictionary<int, IList<DateTime>> _yearToDays;
         private readonly IDictionary<DateTime, string> _dayToFilename;
         private readonly IDictionary<string, IList<ExchangeRate>> _filenameToEr;
@@ -53,12 +52,12 @@ namespace KursyWalut.Provider
 
         public async Task<IList<int>> GetAvailableYears()
         {
-            return await GetAvailableYears2(ProgressNotify.Master);
+            return await GetAvailableYears2(Progress.Master);
         }
 
-        public async Task<IList<DateTime>> GetAvailableDates(int year)
+        public async Task<IList<DateTime>> GetAvailableDays(int year)
         {
-            return await GetAvailableDates2(year, ProgressNotify.Master);
+            return await GetAvailableDates2(year, Progress.Master);
         }
 
         public  Task<DateTime> GetFirstAvailableDate()
@@ -73,24 +72,24 @@ namespace KursyWalut.Provider
 
         public async Task<IList<ExchangeRate>> GetExchangeRates(DateTime day)
         {
-            return await GetExchangeRates2(day, ProgressNotify.Master);
+            return await GetExchangeRates2(day, Progress.Master);
         }
 
         public async Task<ExchangeRate> GetExchangeRate(Currency currency, DateTime day)
         {
-            return await GetExchangeRate2(currency, day, ProgressNotify.Master);
+            return await GetExchangeRate2(currency, day, Progress.Master);
         }
 
         public async Task<IList<ExchangeRate>> GetExchangeRateHistory(
             Currency currency, DateTime startDay, DateTime stopDay)
         {
-            return await GetExchangeRateHistory2(currency, startDay, stopDay, ProgressNotify.Master);
+            return await GetExchangeRateHistory2(currency, startDay, stopDay, Progress.Master);
         }
 
         // -----------------------------------------------------------------------------------------
 
         /// internal version of GetAvailableYears; customizable lock, and progress start/stop value
-        private async Task<IList<int>> GetAvailableYears2(ProgressNotify p)
+        private async Task<IList<int>> GetAvailableYears2(Progress p)
         {
             const int startYear = 2002;
             var endYear = DateTime.Now.Year;
@@ -98,7 +97,7 @@ namespace KursyWalut.Provider
         }
 
         /// internal version of GetAvailableDate; customizable lock, and progress start/stop value
-        private async Task<IList<DateTime>> GetAvailableDates2(int year, ProgressNotify p)
+        private async Task<IList<DateTime>> GetAvailableDates2(int year, Progress p)
         {
             if (p.IsMaster) _lock.WaitOne();
 
@@ -108,12 +107,12 @@ namespace KursyWalut.Provider
 
                 if (_yearToDays.ContainsKey(year))
                 {
-                    NotifyObservers(p.Stop);
+                    NotifyObservers(p.End);
                     return _yearToDays[year];
                 }
 
                 var partProgress = CalculateProgress(p, 10);
-                var availableYears = await GetAvailableYears2(new ProgressNotify(p.Start, partProgress));
+                var availableYears = await GetAvailableYears2(new Progress(p.Start, partProgress));
                 var first = availableYears.First(y => y.Equals(year)); // possible InvalidOperationException
                 NotifyObservers(partProgress);
 
@@ -131,7 +130,7 @@ namespace KursyWalut.Provider
                 }
 
                 _yearToDays.Add(year, result);
-                NotifyObservers(p.Stop);
+                NotifyObservers(p.End);
 
                 return result.AsReadOnly();
             }
@@ -153,7 +152,7 @@ namespace KursyWalut.Provider
         }
 
         /// internal version of GetExchangeRates; customizable lock, and progress start/stop value
-        private async Task<IList<ExchangeRate>> GetExchangeRates2(DateTime day, ProgressNotify p)
+        private async Task<IList<ExchangeRate>> GetExchangeRates2(DateTime day, Progress p)
         {
             if (p.IsMaster) _lock.WaitOne();
 
@@ -164,12 +163,12 @@ namespace KursyWalut.Provider
                 if (_dayToFilename.ContainsKey(day))
                     if (_filenameToEr.ContainsKey(_dayToFilename[day]))
                     {
-                        NotifyObservers(p.Stop);
+                        NotifyObservers(p.End);
                         return _filenameToEr[_dayToFilename[day]];
                     }
 
                 var partProgress = CalculateProgress(p, 30);
-                await GetAvailableDates2(day.Year, new ProgressNotify(p.Start, partProgress));
+                await GetAvailableDates2(day.Year, new Progress(p.Start, partProgress));
                 NotifyObservers(partProgress);
 
                 var filename = _dayToFilename[day]; // possible KeyNotFoundException
@@ -179,7 +178,7 @@ namespace KursyWalut.Provider
 
                 var exchangeRates = ParseExchangeRates(xml, day);
                 _filenameToEr.Add(filename, exchangeRates);
-                NotifyObservers(p.Stop);
+                NotifyObservers(p.End);
 
                 return exchangeRates;
             }
@@ -187,7 +186,7 @@ namespace KursyWalut.Provider
             catch (Exception ex) when (ex is KeyNotFoundException)
             {
                 if (p.IsMaster) NotifyObservers(-1);
-                throw new ArgumentException("day was not returned by GetAvailableDates(day.year)");
+                throw new ArgumentException("day was not returned by GetAvailableDays(day.year)");
             }
             catch (Exception ex) when (!(ex is ArgumentException || ex is IOException))
             {
@@ -201,7 +200,7 @@ namespace KursyWalut.Provider
         }
 
         /// internal version of GetExchangeRate; customizable lock, and progress start/stop value
-        private async Task<ExchangeRate> GetExchangeRate2(Currency currency, DateTime day, ProgressNotify p)
+        private async Task<ExchangeRate> GetExchangeRate2(Currency currency, DateTime day, Progress p)
         {
             if (p.IsMaster) _lock.WaitOne();
 
@@ -210,12 +209,12 @@ namespace KursyWalut.Provider
                 NotifyObservers(p.Start);
 
                 var partProgress = CalculateProgress(p, 70);
-                var exchangeRates2 = await GetExchangeRates2(day, new ProgressNotify(p.Start, partProgress));
+                var exchangeRates2 = await GetExchangeRates2(day, new Progress(p.Start, partProgress));
 
                 NotifyObservers(partProgress);
                 var exchangeRate = exchangeRates2.First(e => e.Currency.Equals(currency)); // possible InvalidOperationException
 
-                NotifyObservers(p.Stop);
+                NotifyObservers(p.End);
                 return exchangeRate;
             }
 
@@ -232,7 +231,7 @@ namespace KursyWalut.Provider
 
         /// internal version of GetExchangeRatesHistory; customizable lock, and progress start/stop value
         private async Task<IList<ExchangeRate>> GetExchangeRateHistory2(
-            Currency currency, DateTime startDay, DateTime stopDay, ProgressNotify p)
+            Currency currency, DateTime startDay, DateTime stopDay, Progress p)
         {
             if (p.IsMaster) _lock.WaitOne();
 
@@ -248,7 +247,7 @@ namespace KursyWalut.Provider
                 var progressPerYear = (partProgress - p.Start)/(stopYear - startYear + 1);
                 for (var year = startYear; year <= stopYear; year++)
                 {
-                    await GetAvailableDates2(year, new ProgressNotify(progress, progress + progressPerYear));
+                    await GetAvailableDates2(year, new Progress(progress, progress + progressPerYear));
                     progress += progressPerYear;
                     NotifyObservers(progress);
                 }
@@ -259,12 +258,12 @@ namespace KursyWalut.Provider
                     .Select(s => s.Key)
                     .OrderBy(day => day);
 
-                var progressPerDay = (p.Stop - progress)/days.Count();
+                var progressPerDay = (p.End - progress)/days.Count();
                 var result = new List<ExchangeRate>();
                 foreach (var dateTime in days)
                 {
                     var exchangeRates =
-                        await GetExchangeRates2(dateTime, new ProgressNotify(progress, progress + progressPerDay));
+                        await GetExchangeRates2(dateTime, new Progress(progress, progress + progressPerDay));
                     var exchangeRate = exchangeRates.First(e => e.Currency.Equals(currency));
 
                     result.Add(exchangeRate);
@@ -387,9 +386,9 @@ namespace KursyWalut.Provider
 
         // -----------------------------------------------------------------------------------------
 
-        private int CalculateProgress(ProgressNotify p, int percentDone)
+        private int CalculateProgress(Progress p, int percentDone)
         {
-            return p.Start + (p.Stop - p.Start)*(percentDone/100);
+            return p.Start + (p.End - p.Start)*(percentDone/100);
         }
 
         private void NotifyObservers(int percentDone)
@@ -411,21 +410,6 @@ namespace KursyWalut.Provider
             }
         }
 
-        private class ProgressNotify
-        {
-            public static readonly ProgressNotify Master = new ProgressNotify(0, 100);
-
-            public readonly bool IsMaster;
-            public readonly int Start;
-            public readonly int Stop;
-
-            public ProgressNotify(int start, int stop)
-            {
-                IsMaster = (start == 0) && (stop == 100);
-                Start = start;
-                Stop = stop;
-            }
-        }
 
         private class ObserverDisposable : IDisposable
         {
