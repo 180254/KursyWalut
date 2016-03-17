@@ -13,17 +13,19 @@ namespace KursyWalut.Cache
             _localSettings.Values[key] = value;
         }
 
-        public TR Get<TR>(string key)
+        public TR SetIfAbsent<TR>(string key, TR value)
         {
-            return (TR) _localSettings.Values[key];
+            return ComputeIfAbsent(key, () => value);
         }
 
-        public TR GetOrSet<TR>(string key, TR value)
+        public TR Compute<TR>(string key, Func<TR> valueFunc)
         {
-            return GetOrCompute(key, () => value);
+            var value = valueFunc.Invoke();
+            Set(key, value);
+            return value;
         }
 
-        public TR GetOrCompute<TR>(string key, Func<TR> valueFunc)
+        public TR ComputeIfAbsent<TR>(string key, Func<TR> valueFunc)
         {
             try
             {
@@ -31,9 +33,18 @@ namespace KursyWalut.Cache
             }
             catch (Exception ex) when (ex is KeyNotFoundException)
             {
-                Set(key, valueFunc.Invoke());
-                return Get<TR>(key);
+                return Compute(key, valueFunc);
             }
+        }
+
+        public TR Get<TR>(string key)
+        {
+            return (TR) _localSettings.Values[key];
+        }
+
+        public bool Remove(string key)
+        {
+            return _localSettings.Values.Remove(key);
         }
     }
 }
