@@ -6,29 +6,41 @@ namespace KursyWalut.Provider
     {
         public static readonly Progress Master = new Progress(0, 1000);
 
+        private readonly Progress _parent;
         public readonly int Start;
         public readonly int End;
 
-        public Progress(int start, int end)
+        private Progress(Progress parent, int start, int end)
         {
             if (start < end) throw new ArgumentException(nameof(start) + " < " + nameof(end));
 
+            _parent = parent;
             Start = start;
             End = end;
         }
 
-        public Progress Partial(double percentFrom, double percentTo)
+        public Progress(int start, int end) : this(null, start, end)
+        {
+        }
+
+        public bool Starting => _parent == null || Start == _parent.Start;
+        public bool Ending => _parent == null || End == _parent.End;
+
+        public Progress PartialPercent(double percentFrom, double percentTo)
         {
             if (!(percentFrom >= 0 && percentFrom <= 100)) throw new ArgumentOutOfRangeException(nameof(percentFrom));
             if (!(percentTo >= 0 && percentTo <= 100)) throw new ArgumentOutOfRangeException(nameof(percentTo));
             if (percentFrom < percentTo) throw new ArgumentException(nameof(percentFrom) + " < " + nameof(percentTo));
 
-            return new Progress(ComputePercent(percentFrom), ComputePercent(percentTo));
+            return new Progress(this, ComputePercent(percentFrom), ComputePercent(percentTo));
         }
 
-        public Progress Partial2(int partIndex, int partCount)
+        public Progress PartialPart(int partIndex, int partCount)
         {
-            return Partial(partIndex*(1.0/partCount), (partIndex + 1)*(1.0/partCount));
+            if (partIndex >= partCount) throw new ArgumentException(nameof(partIndex) + " >= " + nameof(partCount));
+
+            var percentPerPart = 1.0/partCount;
+            return PartialPercent(partIndex*percentPerPart, (partIndex + 1)*percentPerPart);
         }
 
         private int ComputePercent(double percent)

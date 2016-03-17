@@ -50,43 +50,63 @@ namespace KursyWalut.Provider.Impl
 
         public async Task<DateTime> GetFirstAvailableDay(Progress p)
         {
-            var firstYear = (await GetAvailableYears(p.Partial(0, 0.1))).First();
-            var firstDate = (await GetAvailableDays(firstYear, p.Partial(0.11, 1))).First();
+            var firstYear = (await GetAvailableYears(p.PartialPercent(0.00, 0.40))).First();
+            var firstDate = (await GetAvailableDays(firstYear, p.PartialPercent(0.41, 1.00))).First();
             return firstDate;
         }
 
         public async Task<DateTime> GetLastAvailableDay(Progress p)
         {
-            var lastYear = (await GetAvailableYears(p.Partial(0, 0.1))).Last();
-            var lastDate = (await GetAvailableDays(lastYear, p.Partial(0.11, 1))).Last();
+            var lastYear = (await GetAvailableYears(p.PartialPercent(0.00, 0.40))).Last();
+            var lastDate = (await GetAvailableDays(lastYear, p.PartialPercent(0.41, 1.00))).Last();
             return lastDate;
         }
 
         public async Task<IList<ExchangeRate>> GetExchangeRateHistory(
-            Currency currency, DateTime startDay, DateTime stopDay, Progress p)
+            Currency currency, DateTime startDay, DateTime endDay, Progress p)
         {
-            var startYear = startDay.Year;
-            var stopYear = stopDay.Year;
+            if (startDay > endDay)
+                throw new ArgumentException("start.day > stop.day");
+            if (startDay > await GetFirstAvailableDay(p.PartialPercent(0.00, 0.05)))
+                throw new ArgumentException("start.day > GetFirstAvailableDay()");
+            if (endDay > await GetLastAvailableDay(p.PartialPercent(0.06, 0.10)))
+                throw new ArgumentException("end.day > GetLastvailableDay()");
+
+            var availableDays = await GetDaysBetweenYears(startDay.Year, endDay.Year, p.PartialPercent(0.11, 0.40));
+            var properDays = availableDays.Where(day => (day >= startDay) && (day <= endDay)).ToImmutableList();
+            var exchangeRates = await GetExchangeRatesInDays(properDays, currency, p.PartialPercent(0.41, 1.00));
+
+            return exchangeRates;
+        }
+
+        private async Task<List<DateTime>> GetDaysBetweenYears(int startYear, int endYear, Progress p)
+        {
+            var years = Enumerable.Range(startYear, endYear - startYear + 1).ToImmutableList();
 
             var availableDays = new List<DateTime>();
-            var years = Enumerable.Range(startYear, stopYear - startYear + 1).ToImmutableList();
-            var progress = p.Partial(0, 0.4);
             for (var i = 0; i < years.Count; i++)
             {
                 var t = years[i];
-                var progress2 = progress.Partial2(i, years.Count);
-                availableDays.AddRange(await GetAvailableDays(t, progress2));
+                var progress = p.PartialPart(i, years.Count);
+                availableDays.AddRange(await GetAvailableDays(t, progress));
             }
 
+            return availableDays;
+        }
+
+        private async Task<List<ExchangeRate>> GetExchangeRatesInDays(
+            IList<DateTime> days, Currency currency, Progress p)
+        {
             var exchangeRates = new List<ExchangeRate>();
-            var days = availableDays.Where(day => (day >= startDay) && (day <= stopDay)).ToImmutableList();
-            progress = p.Partial(0.41, 1);
             for (var i = 0; i < days.Count; i++)
             {
                 var day = days[i];
-                var progress2 = progress.Partial2(i, days.Count);
-                exchangeRates.Add(await GetExchangeRate(currency, day, progress2));
+                var progress = p.PartialPart(i, days.Count);
+
+                // possible ArgumentException(invalid currency)
+                exchangeRates.Add(await GetExchangeRate(currency, day, progress));
             }
+
             return exchangeRates;
         }
     }

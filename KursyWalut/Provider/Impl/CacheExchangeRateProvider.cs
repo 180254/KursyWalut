@@ -16,8 +16,8 @@ namespace KursyWalut.Provider.Impl
         {
             _exchangeRatesProvider = exchangeRatesProvider;
             _cache = cache;
-            _yearToDays = cache.GetOrSet("_yearToDays", new Dictionary<int, IList<DateTime>>());
-            _dayToEr = cache.GetOrSet("_dayToEr", new Dictionary<DateTime, IList<ExchangeRate>>());
+            _yearToDays = cache.SetIfAbsent("_yearToDays", new Dictionary<int, IList<DateTime>>());
+            _dayToEr = cache.SetIfAbsent("_dayToEr", new Dictionary<DateTime, IList<ExchangeRate>>());
         }
 
         public IDisposable Subscribe(IObserver<int> observer)
@@ -28,7 +28,7 @@ namespace KursyWalut.Provider.Impl
         public async Task<IList<int>> GetAvailableYears(Progress p)
         {
             return await Task.Run(() =>
-                _cache.GetOrCompute("_availYears", () =>
+                _cache.ComputeIfAbsent("_availYears", () =>
                 {
                     var availYearsTask = _exchangeRatesProvider.GetAvailableYears(p);
                     availYearsTask.Wait();
