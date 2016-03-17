@@ -37,14 +37,18 @@ namespace KursyWalut.Provider.Impl
 
         public async Task<ExchangeRate> GetExchangeRate(Currency currency, DateTime day, Progress p)
         {
+            IList<ExchangeRate> exchangeRates = null;
             try
             {
-                var exchangeRates = await GetExchangeRates(day, p);
+                exchangeRates = await GetExchangeRates(day, p);
                 return exchangeRates.First(e => e.Currency.Equals(currency)); // possible InvalidOperationException
             }
             catch (Exception ex) when (ex is InvalidOperationException)
             {
-                throw new ArgumentException("invalid currency");
+                throw new ArgumentException("invalid currency; want " + currency + ";" +
+                                            "day " + day + "; " +
+                                            "avail " +
+                                            string.Join<Currency>(",", exchangeRates?.Select(e => e.Currency).ToArray()));
             }
         }
 
@@ -67,8 +71,8 @@ namespace KursyWalut.Provider.Impl
         {
             if (startDay > endDay)
                 throw new ArgumentException("start.day > stop.day");
-            if (startDay > await GetFirstAvailableDay(p.PartialPercent(0.00, 0.05)))
-                throw new ArgumentException("start.day > GetFirstAvailableDay()");
+            if (startDay < await GetFirstAvailableDay(p.PartialPercent(0.00, 0.05)))
+                throw new ArgumentException("start.day < GetFirstAvailableDay()");
             if (endDay > await GetLastAvailableDay(p.PartialPercent(0.06, 0.10)))
                 throw new ArgumentException("end.day > GetLastvailableDay()");
 
@@ -103,8 +107,14 @@ namespace KursyWalut.Provider.Impl
                 var day = days[i];
                 var progress = p.PartialPart(i, days.Count);
 
-                // possible ArgumentException(invalid currency)
-                exchangeRates.Add(await GetExchangeRate(currency, day, progress));
+                try
+                {
+                    // possible ArgumentException(invalid/unknown currency)
+                    exchangeRates.Add(await GetExchangeRate(currency, day, progress));
+                }
+                catch (Exception ex) when (ex is ArgumentException)
+                {
+                }
             }
 
             return exchangeRates;

@@ -100,6 +100,7 @@
     </Compile>
     <Compile Include="Cache\ICache.cs" />
     <Compile Include="Cache\LocalSettingsCache.cs" />
+    <Compile Include="Cache\NothingCached.cs" />
     <Compile Include="MainPage.xaml.cs">
       <DependentUpon>MainPage.xaml</DependentUpon>
     </Compile>
@@ -108,7 +109,9 @@
     <Compile Include="Provider\IExchangeRatesService.cs" />
     <Compile Include="Provider\IExchangeRatesProvider.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="Provider\Impl\NbpExchangeRateExtractor.cs" />
     <Compile Include="Provider\Impl\NbpExchangeRatesProvider.cs" />
+    <Compile Include="Provider\ObservationDispose.cs" />
     <Compile Include="Provider\Progress.cs" />
     <Compile Include="Provider\Impl\CacheExchangeRateProvider.cs" />
     <Compile Include="Provider\Impl\StandardExchangeRateService.cs" />

@@ -15,7 +15,7 @@
 
         protected bool Equals(Currency other)
         {
-            return string.Equals(Code, other.Code) && string.Equals(Name, other.Name) && Multiplier == other.Multiplier;
+            return string.Equals(Code, other.Code);
         }
 
         public override bool Equals(object obj)
@@ -27,13 +27,7 @@
 
         public override int GetHashCode()
         {
-            unchecked
-            {
-                var hashCode = Code?.GetHashCode() ?? 0;
-                hashCode = (hashCode*397) ^ (Name?.GetHashCode() ?? 0);
-                hashCode = (hashCode*397) ^ Multiplier;
-                return hashCode;
-            }
+            return Code?.GetHashCode() ?? 0;
         }
 
         public override string ToString()

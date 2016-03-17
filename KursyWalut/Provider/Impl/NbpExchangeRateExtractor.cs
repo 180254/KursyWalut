@@ -1,0 +1,86 @@
+﻿using System;
+using System.Collections.Generic;
+using System.Collections.Immutable;
+using System.Globalization;
+using System.Linq;
+using System.Xml.Linq;
+
+namespace KursyWalut.Provider.Impl
+{
+    internal class NbpExchangeRateExtractor
+    {
+        /// <exception cref="T:System.FormatException">httpResponse is in invalid format.</exception>
+        public IEnumerable<string> ParseFilenames(string httpResponse)
+        {
+            var filenames = httpResponse.Split(new[] {'\n'}, StringSplitOptions.RemoveEmptyEntries);
+
+            if (filenames.Length == 0)
+                throw new FormatException("empty response(pf)");
+
+            return filenames;
+        }
+
+        /// <exception cref="T:System.FormatException">filename is in invalid format.</exception>
+        public DateTime ParseDateTime(string filename)
+        {
+            try
+            {
+                return DateTime.ParseExact(filename.Substring(5, 6), "yyMMdd", CultureInfo.InvariantCulture);
+            }
+            catch (ArgumentOutOfRangeException ex)
+            {
+                throw new FormatException("filename is too short(pdt)", ex);
+            }
+        }
+
+        /// <exception cref="T:System.FormatException">xContainer is in invalid format.</exception>
+        public IList<ExchangeRate> ParseExchangeRates(XContainer xC, DateTime day)
+        {
+            var exchangeRates = xC
+                .Descendants("tabela_kursow")
+                .Descendants("pozycja")
+                .Select(xmlEr => ParseExchangeRate(xmlEr, day))
+                .ToImmutableList();
+
+            if (exchangeRates.Count == 0)
+                throw new FormatException("empty response(per); " + xC);
+
+            return exchangeRates;
+        }
+
+        /// <exception cref="T:System.FormatException">xContainer is in invalid format.</exception>
+        public ExchangeRate ParseExchangeRate(XContainer xC, DateTime day)
+        {
+            try
+            {
+                return new ExchangeRate(
+                    day,
+                    ParseCurrency(xC),
+                    double.Parse(xC.Element("kurs_sredni").Value.Replace(",", ".")));
+            }
+
+            catch (Exception ex)
+                when (ex is NullReferenceException || ex is OverflowException || ex is ArgumentException)
+            {
+                throw new FormatException("xContainer is in invalid format(per);" + xC);
+            }
+        }
+
+        /// <exception cref="T:System.FormatException">xContainer is in invalid format.</exception>
+        public Currency ParseCurrency(XContainer xC)
+        {
+            try
+            {
+                return new Currency(
+                    xC.Element("kod_waluty").Value,
+                    (xC.Element("nazwa_waluty") ?? xC.Element("nazwa_kraju")).Value,
+                    int.Parse(xC.Element("przelicznik").Value));
+            }
+
+            catch (Exception ex) when (ex is NullReferenceException || ex is OverflowException)
+            {
+                throw new FormatException("xContainer is in invalid format(pc); " + xC);
+            }
+        }
+    }
+}

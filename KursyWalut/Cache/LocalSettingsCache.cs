@@ -4,6 +4,7 @@ using Windows.Storage;
 
 namespace KursyWalut.Cache
 {
+    // TODO: doesn't work ;] doesn't actually know how to cache
     internal class LocalSettingsCache : ICache
     {
         private readonly ApplicationDataContainer _localSettings = ApplicationData.Current.LocalSettings;
@@ -39,7 +40,9 @@ namespace KursyWalut.Cache
 
         public TR Get<TR>(string key)
         {
-            return (TR) _localSettings.Values[key];
+            var ret = (TR) _localSettings.Values[key];
+            if (ret == null) throw new KeyNotFoundException("key: " + key);
+            return ret;
         }
 
         public bool Remove(string key)
