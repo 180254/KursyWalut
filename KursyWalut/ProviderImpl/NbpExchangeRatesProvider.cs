@@ -3,13 +3,14 @@ using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.IO;
 using System.Linq;
-using System.Net.Http;
 using System.Text;
 using System.Threading.Tasks;
 using System.Xml.Linq;
 using KursyWalut.Cache;
+using KursyWalut.Model;
+using KursyWalut.Provider;
 
-namespace KursyWalut.Provider.Impl
+namespace KursyWalut.ProviderImpl
 {
     internal class NbpExchangeRatesProvider : IExchangeRatesProvider
     {
@@ -19,12 +20,10 @@ namespace KursyWalut.Provider.Impl
         // -----------------------------------------------------------------------------------------
 
         private readonly IList<IObserver<int>> _observers;
-        private readonly IDictionary<DateTime, string> _dayToFilename;
-
-        // -----------------------------------------------------------------------------------------
-
         private readonly NbpExchangeRateExtractor _extractor;
 
+        private readonly ICache _cache;
+        private readonly IDictionary<DateTime, string> _dayToFilename;
         // -----------------------------------------------------------------------------------------
 
         public NbpExchangeRatesProvider(ICache cache)
@@ -34,9 +33,11 @@ namespace KursyWalut.Provider.Impl
             _iso88592 = Encoding.GetEncoding("ISO-8859-2");
 
             _observers = new List<IObserver<int>>();
-            _dayToFilename = cache.SetIfAbsent("_dayToFilename", new Dictionary<DateTime, string>());
-
             _extractor = new NbpExchangeRateExtractor();
+
+            _cache = cache;
+            _dayToFilename = cache.Get("_dayToFilename", () => new Dictionary<DateTime, string>());
+  
         }
 
         // -----------------------------------------------------------------------------------------
@@ -69,7 +70,7 @@ namespace KursyWalut.Provider.Impl
                 var first = availYears.First(y => y.Equals(year)); // possible InvalidOperationException
 
                 var year2 = year == DateTime.Now.Year ? "" : year.ToString();
-                var dir = await GetHttpResponse("http://www.nbp.pl/kursy/xml/dir" + year2 + ".txt", _utf8);
+                var dir = await _extractor.GetHttpResponse("http://www.nbp.pl/kursy/xml/dir" + year2 + ".txt", _utf8);
                 var filenames = _extractor.ParseFilenames(dir);
 
                 NotifyObservers(p, 0.70);
@@ -80,6 +81,8 @@ namespace KursyWalut.Provider.Impl
                     _dayToFilename.Add(day, filename);
                     result.Add(day);
                 }
+
+                _cache.Store(nameof(_dayToFilename), _dayToFilename);
 
                 NotifyObservers(p, 1.00);
                 return result.AsReadOnly();
@@ -103,7 +106,8 @@ namespace KursyWalut.Provider.Impl
             {
                 NotifyObservers(p, 0.00);
                 var filename = _dayToFilename[day]; // possible KeyNotFoundException
-                var response = await GetHttpResponse("http://www.nbp.pl/kursy/xml/" + filename + ".xml", _iso88592);
+                var response =
+                    await _extractor.GetHttpResponse("http://www.nbp.pl/kursy/xml/" + filename + ".xml", _iso88592);
 
                 NotifyObservers(p, 0.60);
                 var xml = XDocument.Load(new StringReader(response));
@@ -125,23 +129,9 @@ namespace KursyWalut.Provider.Impl
             }
         }
 
-
         // -----------------------------------------------------------------------------------------
 
-        /// <exception cref="T:System.Exception">If something go wrong.</exception>
-        private async Task<string> GetHttpResponse(string requestUri, Encoding encoding)
-        {
-            using (var client = new HttpClient())
-            {
-                var bytes = await client.GetByteArrayAsync(requestUri);
-                var str = encoding.GetString(bytes);
-                return str;
-            }
-        }
-
-        // -----------------------------------------------------------------------------------------
-
-        public static bool AlmostEqual(double x, double y)
+        private bool AlmostEqual(double x, double y)
         {
             var epsilon = Math.Max(Math.Abs(x), Math.Abs(y))*1E-5;
             return Math.Abs(x - y) <= epsilon;

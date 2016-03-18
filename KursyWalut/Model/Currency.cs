@@ -1,4 +1,4 @@
-﻿namespace KursyWalut.Provider
+﻿namespace KursyWalut.Model
 {
     internal class Currency
     {

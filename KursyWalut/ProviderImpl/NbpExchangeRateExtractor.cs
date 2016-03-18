@@ -1,14 +1,34 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Collections.Immutable;
+using System.Diagnostics;
 using System.Globalization;
 using System.Linq;
+using System.Net.Http;
+using System.Text;
+using System.Threading.Tasks;
 using System.Xml.Linq;
+using KursyWalut.Model;
 
-namespace KursyWalut.Provider.Impl
+namespace KursyWalut.ProviderImpl
 {
     internal class NbpExchangeRateExtractor
     {
+        public static Stopwatch HttpStopwatch = new Stopwatch();
+        private readonly HttpClient _client = new HttpClient();
+
+        /// <exception cref="T:System.Exception">If something go wrong.</exception>
+        public async Task<string> GetHttpResponse(string requestUri, Encoding encoding)
+        {
+            HttpStopwatch.Start();
+            var bytes = await _client.GetByteArrayAsync(requestUri);
+            var str = encoding.GetString(bytes);
+            HttpStopwatch.Stop();
+
+            return str;
+        }
+
+
         /// <exception cref="T:System.FormatException">httpResponse is in invalid format.</exception>
         public IEnumerable<string> ParseFilenames(string httpResponse)
         {

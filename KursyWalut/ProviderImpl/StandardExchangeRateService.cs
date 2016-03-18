@@ -1,10 +1,14 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Collections.Immutable;
+using System.Diagnostics;
 using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
+using KursyWalut.Model;
+using KursyWalut.Provider;
 
-namespace KursyWalut.Provider.Impl
+namespace KursyWalut.ProviderImpl
 {
     internal class StandardExchangeRateService : IExchangeRatesService
     {
@@ -83,41 +87,41 @@ namespace KursyWalut.Provider.Impl
             return exchangeRates;
         }
 
-        private async Task<List<DateTime>> GetDaysBetweenYears(int startYear, int endYear, Progress p)
+        private async Task<IList<DateTime>> GetDaysBetweenYears(int startYear, int endYear, Progress p)
         {
             var years = Enumerable.Range(startYear, endYear - startYear + 1).ToImmutableList();
+            var work = new Task<IList<DateTime>>[years.Count];
 
-            var availableDays = new List<DateTime>();
             for (var i = 0; i < years.Count; i++)
             {
                 var t = years[i];
                 var progress = p.PartialPart(i, years.Count);
-                availableDays.AddRange(await GetAvailableDays(t, progress));
+                work[i] = GetAvailableDays(t, progress);
             }
 
-            return availableDays;
+            var workDone = await Task.WhenAll(work);
+            return workDone.SelectMany(x => x).ToImmutableList();
         }
 
-        private async Task<List<ExchangeRate>> GetExchangeRatesInDays(
+        private async Task<IList<ExchangeRate>> GetExchangeRatesInDays(
             IList<DateTime> days, Currency currency, Progress p)
         {
-            var exchangeRates = new List<ExchangeRate>();
+            var work = new List<Task<ExchangeRate>>();
+            var waitFor = Environment.ProcessorCount*10;
+
             for (var i = 0; i < days.Count; i++)
             {
                 var day = days[i];
                 var progress = p.PartialPart(i, days.Count);
+                work.Add(GetExchangeRate(currency, day, progress));
 
-                try
-                {
-                    // possible ArgumentException(invalid/unknown currency)
-                    exchangeRates.Add(await GetExchangeRate(currency, day, progress));
-                }
-                catch (Exception ex) when (ex is ArgumentException)
-                {
-                }
+                SpinWait.SpinUntil(() => work.Count(w => !w.IsCompleted) < waitFor*2/3);
+//                if (i%waitFor == 0) await Task.WhenAll(work);
+                if (i%(days.Count/10) == 0) Debug.WriteLine("DL-" + i);
             }
 
-            return exchangeRates;
+            var workDone = await Task.WhenAll(work);
+            return workDone.ToImmutableList();
         }
     }
 }

@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace KursyWalut.Provider
+namespace KursyWalut.Model
 {
     internal class Progress
     {

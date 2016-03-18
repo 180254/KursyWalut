@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 
-namespace KursyWalut.Provider
+namespace KursyWalut.ProviderImpl
 {
     internal class ObservationDispose<T> : IDisposable
     {
