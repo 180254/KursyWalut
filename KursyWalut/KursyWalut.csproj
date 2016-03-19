@@ -105,13 +105,14 @@
     </Compile>
     <Compile Include="Model\ExchangeRate.cs" />
     <Compile Include="Model\Currency.cs" />
+    <Compile Include="Progress\IPProgress.cs" />
+    <Compile Include="Progress\Integer.cs" />
+    <Compile Include="Progress\PProgress.cs" />
     <Compile Include="Provider\IExchangeRatesService.cs" />
     <Compile Include="Provider\IExchangeRatesProvider.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="ProviderImpl\NbpExchangeRateExtractor.cs" />
     <Compile Include="ProviderImpl\NbpExchangeRatesProvider.cs" />
-    <Compile Include="ProviderImpl\ObservationDispose.cs" />
-    <Compile Include="Model\Progress.cs" />
     <Compile Include="ProviderImpl\CacheExchangeRateProvider.cs" />
     <Compile Include="ProviderImpl\StandardExchangeRateService.cs" />
     <Compile Include="Serializers\CurrencySerializer.cs" />

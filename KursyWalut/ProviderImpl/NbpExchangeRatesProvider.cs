@@ -8,6 +8,7 @@ using System.Threading.Tasks;
 using System.Xml.Linq;
 using KursyWalut.Cache;
 using KursyWalut.Model;
+using KursyWalut.Progress;
 using KursyWalut.Provider;
 
 namespace KursyWalut.ProviderImpl
@@ -19,7 +20,6 @@ namespace KursyWalut.ProviderImpl
 
         // -----------------------------------------------------------------------------------------
 
-        private readonly IList<IObserver<int>> _observers;
         private readonly NbpExchangeRateExtractor _extractor;
 
         private readonly ICache _cache;
@@ -32,48 +32,38 @@ namespace KursyWalut.ProviderImpl
             _utf8 = Encoding.UTF8;
             _iso88592 = Encoding.GetEncoding("ISO-8859-2");
 
-            _observers = new List<IObserver<int>>();
             _extractor = new NbpExchangeRateExtractor();
 
             _cache = cache;
             _dayToFilename = cache.Get("_dayToFilename", () => new Dictionary<DateTime, string>());
-  
         }
 
         // -----------------------------------------------------------------------------------------
 
-        public IDisposable Subscribe(IObserver<int> observer)
+        public async Task<IList<int>> GetAvailableYears(IPProgress p)
         {
-            _observers.Add(observer);
-            return new ObservationDispose<int>(_observers, observer);
-        }
-
-        // -----------------------------------------------------------------------------------------
-
-        public async Task<IList<int>> GetAvailableYears(Progress p)
-        {
-            NotifyObservers(p, 0.00);
+            p.ReportProgress(0.00);
             const int startYear = 2002;
             var endYear = DateTime.Now.Year;
             var years = Enumerable.Range(startYear, endYear - startYear + 1).ToImmutableList();
 
-            NotifyObservers(p, 1.00);
+            p.ReportProgress(1.00);
             return await Task.Run(() => years);
         }
 
-        public async Task<IList<DateTime>> GetAvailableDays(int year, Progress p)
+        public async Task<IList<DateTime>> GetAvailableDays(int year, IPProgress p)
         {
             try
             {
-                NotifyObservers(p, 0.00);
-                var availYears = await GetAvailableYears(p.PartialPercent(0.00, 0.15));
+                p.ReportProgress(0.00);
+                var availYears = await GetAvailableYears(p.SubPercent(0.00, 0.15));
                 var first = availYears.First(y => y.Equals(year)); // possible InvalidOperationException
 
                 var year2 = year == DateTime.Now.Year ? "" : year.ToString();
                 var dir = await _extractor.GetHttpResponse("http://www.nbp.pl/kursy/xml/dir" + year2 + ".txt", _utf8);
                 var filenames = _extractor.ParseFilenames(dir);
 
-                NotifyObservers(p, 0.70);
+                p.ReportProgress(0.70);
                 var result = new List<DateTime>();
                 foreach (var filename in filenames.Where(f => f.StartsWith("a")))
                 {
@@ -84,38 +74,38 @@ namespace KursyWalut.ProviderImpl
 
                 _cache.Store(nameof(_dayToFilename), _dayToFilename);
 
-                NotifyObservers(p, 1.00);
+                p.ReportProgress(1.00);
                 return result.AsReadOnly();
             }
 
             catch (Exception ex) when (ex is InvalidOperationException)
             {
-                NotifyObservers(p, -1.00);
+                p.ReportProgress(-1.00);
                 throw new ArgumentException("year was not returned by GetAvailableYears()");
             }
             catch (Exception ex) when (!(ex is ArgumentException || ex is IOException))
             {
-                NotifyObservers(p, -1.00);
+                p.ReportProgress(-1.00);
                 throw new IOException("response unavailable or in unexpected format(0)", ex);
             }
         }
 
-        public async Task<IList<ExchangeRate>> GetExchangeRates(DateTime day, Progress p)
+        public async Task<IList<ExchangeRate>> GetExchangeRates(DateTime day, IPProgress p)
         {
             try
             {
-                NotifyObservers(p, 0.00);
+                p.ReportProgress(0.00);
                 var filename = _dayToFilename[day]; // possible KeyNotFoundException
                 var response =
                     await _extractor.GetHttpResponse("http://www.nbp.pl/kursy/xml/" + filename + ".xml", _iso88592);
 
-                NotifyObservers(p, 0.60);
+                p.ReportProgress(0.60);
                 var xml = XDocument.Load(new StringReader(response));
 
-                NotifyObservers(p, 0.70);
+                p.ReportProgress(0.70);
                 var exchangeRates = _extractor.ParseExchangeRates(xml, day);
 
-                NotifyObservers(p, 1.00);
+                p.ReportProgress(1.00);
                 return exchangeRates;
             }
 
@@ -126,28 +116,6 @@ namespace KursyWalut.ProviderImpl
             catch (Exception ex) when (!(ex is ArgumentException || ex is IOException))
             {
                 throw new IOException("response unavailable or in unexpected format(1)", ex);
-            }
-        }
-
-        // -----------------------------------------------------------------------------------------
-
-        private bool AlmostEqual(double x, double y)
-        {
-            var epsilon = Math.Max(Math.Abs(x), Math.Abs(y))*1E-5;
-            return Math.Abs(x - y) <= epsilon;
-        }
-
-        private void NotifyObservers(Progress p, double percentDone)
-        {
-            var error = AlmostEqual(percentDone, -1.00);
-            var next = p.ComputePercent(percentDone);
-
-            foreach (var observer in _observers)
-            {
-                if (error)
-                    observer.OnError(null);
-                else
-                    observer.OnNext(next);
             }
         }
     }

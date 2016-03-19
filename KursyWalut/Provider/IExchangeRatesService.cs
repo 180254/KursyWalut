@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using KursyWalut.Model;
+using KursyWalut.Progress;
 
 namespace KursyWalut.Provider
 {
@@ -10,13 +11,13 @@ namespace KursyWalut.Provider
         /// <exception cref="T:System.ArgumentException">Invalid currency.</exception>
         /// <exception cref="T:System.ArgumentException">Day was not returned by GetAvailableDays(day.year).</exception>
         /// <exception cref="T:System.IO.IOException">Something go wrong with I/O.</exception>
-        Task<ExchangeRate> GetExchangeRate(Currency currency, DateTime day, Progress p);
+        Task<ExchangeRate> GetExchangeRate(Currency currency, DateTime day, IPProgress p);
 
         /// <exception cref="T:System.IO.IOException">Something go wrong with I/O.</exception>
-        Task<DateTime> GetFirstAvailableDay(Progress p);
+        Task<DateTime> GetFirstAvailableDay(IPProgress p);
 
         /// <exception cref="T:System.IO.IOException">Something go wrong with I/O.</exception>
-        Task<DateTime> GetLastAvailableDay(Progress p);
+        Task<DateTime> GetLastAvailableDay(IPProgress p);
 
         /// <exception cref="T:System.ArgumentException">Invalid currency.</exception>
         /// <exception cref="T:System.ArgumentException">Start.day &gt; stop.day.</exception>
@@ -24,6 +25,6 @@ namespace KursyWalut.Provider
         /// <exception cref="T:System.ArgumentException">End.day &gt; GetLastvailableDay().</exception>
         /// <exception cref="T:System.IO.IOException">Something go wrong with I/O.</exception>
         Task<IList<ExchangeRate>> GetExchangeRateHistory(
-            Currency currency, DateTime startDay, DateTime endDay, Progress p);
+            Currency currency, DateTime startDay, DateTime endDay, IPProgress p);
     }
 }

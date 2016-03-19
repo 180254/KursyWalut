@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Collections.Immutable;
-using System.Diagnostics;
 using System.Globalization;
 using System.Linq;
 using System.Net.Http;
@@ -14,20 +13,15 @@ namespace KursyWalut.ProviderImpl
 {
     internal class NbpExchangeRateExtractor
     {
-        public static Stopwatch HttpStopwatch = new Stopwatch();
         private readonly HttpClient _client = new HttpClient();
 
         /// <exception cref="T:System.Exception">If something go wrong.</exception>
         public async Task<string> GetHttpResponse(string requestUri, Encoding encoding)
         {
-            HttpStopwatch.Start();
             var bytes = await _client.GetByteArrayAsync(requestUri);
             var str = encoding.GetString(bytes);
-            HttpStopwatch.Stop();
-
             return str;
         }
-
 
         /// <exception cref="T:System.FormatException">httpResponse is in invalid format.</exception>
         public IEnumerable<string> ParseFilenames(string httpResponse)
@@ -49,7 +43,7 @@ namespace KursyWalut.ProviderImpl
             }
             catch (ArgumentOutOfRangeException ex)
             {
-                throw new FormatException("filename is too short(pdt)", ex);
+                throw new FormatException("filename is too short(pdt); filename = " + filename, ex);
             }
         }
 
@@ -63,7 +57,7 @@ namespace KursyWalut.ProviderImpl
                 .ToImmutableList();
 
             if (exchangeRates.Count == 0)
-                throw new FormatException("empty response(per); " + xC);
+                throw new FormatException("empty response(per); xC = " + xC);
 
             return exchangeRates;
         }
@@ -82,7 +76,7 @@ namespace KursyWalut.ProviderImpl
             catch (Exception ex)
                 when (ex is NullReferenceException || ex is OverflowException || ex is ArgumentException)
             {
-                throw new FormatException("xContainer is in invalid format(per);" + xC);
+                throw new FormatException("xContainer is in invalid format(per); xC = " + xC);
             }
         }
 
@@ -99,7 +93,7 @@ namespace KursyWalut.ProviderImpl
 
             catch (Exception ex) when (ex is NullReferenceException || ex is OverflowException)
             {
-                throw new FormatException("xContainer is in invalid format(pc); " + xC);
+                throw new FormatException("xContainer is in invalid format(pc); xC = " + xC);
             }
         }
     }

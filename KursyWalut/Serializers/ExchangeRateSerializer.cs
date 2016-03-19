@@ -1,7 +1,6 @@
 ﻿using System;
 using System.IO;
 using KursyWalut.Model;
-using KursyWalut.Provider;
 
 namespace KursyWalut.Serializers
 {

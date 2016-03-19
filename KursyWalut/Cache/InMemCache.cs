@@ -16,7 +16,10 @@ namespace KursyWalut.Cache
                 {
                     return (T) value;
                 }
-                return default_.Invoke();
+
+                var defaultValue = default_.Invoke();
+                Store(key, defaultValue);
+                return defaultValue;
             }
         }
 

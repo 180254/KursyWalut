@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Threading.Tasks;
 using KursyWalut.Cache;
 using KursyWalut.Model;
+using KursyWalut.Progress;
 using KursyWalut.Provider;
 
 namespace KursyWalut.ProviderImpl
@@ -24,42 +25,40 @@ namespace KursyWalut.ProviderImpl
             _dayToEr = cache.Get(nameof(_dayToEr), () => new Dictionary<DateTime, IList<ExchangeRate>>());
         }
 
-        public IDisposable Subscribe(IObserver<int> observer)
-        {
-            return _exchangeRatesProvider.Subscribe(observer);
-        }
-
-        public async Task<IList<int>> GetAvailableYears(Progress p)
+        public async Task<IList<int>> GetAvailableYears(IPProgress p)
         {
             return await Task.Run(() =>
                 _cache.Get("_availYears", async () => await _exchangeRatesProvider.GetAvailableYears(p)));
         }
 
-        public async Task<IList<DateTime>> GetAvailableDays(int year, Progress p)
+        public async Task<IList<DateTime>> GetAvailableDays(int year, IPProgress p)
         {
             return await GetOrCalculate(
                 nameof(_yearToDays), _yearToDays, year,
-                () => _exchangeRatesProvider.GetAvailableDays(year, p));
+                () => _exchangeRatesProvider.GetAvailableDays(year, p), p);
         }
 
-        public async Task<IList<ExchangeRate>> GetExchangeRates(DateTime day, Progress p)
+        public async Task<IList<ExchangeRate>> GetExchangeRates(DateTime day, IPProgress p)
         {
             return await GetOrCalculate(
                 nameof(_dayToEr), _dayToEr, day,
-                () => _exchangeRatesProvider.GetExchangeRates(day, p));
+                () => _exchangeRatesProvider.GetExchangeRates(day, p), p);
         }
 
         private async Task<TV> GetOrCalculate<TK, TV>(
             string cacheKey, IDictionary<TK, TV> dict,
-            TK key, Func<Task<TV>> valueSup)
+            TK key, Func<Task<TV>> valueSup,
+            IPProgress p)
         {
             if (dict.ContainsKey(key))
+            {
+                p.ReportProgress(1.00);
                 return dict[key];
+            }
 
             var value = await valueSup.Invoke();
             dict.Add(key, value);
             _cache.Store(cacheKey, dict);
-
             return value;
         }
     }
