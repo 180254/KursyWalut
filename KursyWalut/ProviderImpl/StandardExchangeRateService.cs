@@ -62,14 +62,14 @@ namespace KursyWalut.ProviderImpl
         public async Task<DateTime> GetFirstAvailableDay(IPProgress p)
         {
             var firstYear = (await GetAvailableYears(p.SubPercent(0.00, 0.40))).First();
-            var firstDate = (await GetAvailableDays(firstYear, p.SubPercent(0.41, 1.00))).First();
+            var firstDate = (await GetAvailableDays(firstYear, p.SubPercent(0.40, 1.00))).First();
             return firstDate;
         }
 
         public async Task<DateTime> GetLastAvailableDay(IPProgress p)
         {
             var lastYear = (await GetAvailableYears(p.SubPercent(0.00, 0.40))).Last();
-            var lastDate = (await GetAvailableDays(lastYear, p.SubPercent(0.41, 1.00))).Last();
+            var lastDate = (await GetAvailableDays(lastYear, p.SubPercent(0.40, 1.00))).Last();
             return lastDate;
         }
 
@@ -80,12 +80,12 @@ namespace KursyWalut.ProviderImpl
                 throw new ArgumentException("start.day > stop.day");
             if (startDay < await GetFirstAvailableDay(p.SubPercent(0.00, 0.05)))
                 throw new ArgumentException("start.day < GetFirstAvailableDay()");
-            if (endDay > await GetLastAvailableDay(p.SubPercent(0.06, 0.10)))
+            if (endDay > await GetLastAvailableDay(p.SubPercent(0.05, 0.10)))
                 throw new ArgumentException("end.day > GetLastvailableDay()");
 
-            var availableDays = await GetDaysBetweenYears(startDay.Year, endDay.Year, p.SubPercent(0.11, 0.40));
+            var availableDays = await GetDaysBetweenYears(startDay.Year, endDay.Year, p.SubPercent(0.10, 0.40));
             var properDays = availableDays.Where(day => (day >= startDay) && (day <= endDay)).ToImmutableList();
-            var exchangeRates = await GetExchangeRatesInDays(properDays, currency, p.SubPercent(0.41, 1.00));
+            var exchangeRates = await GetExchangeRatesInDays(properDays, currency, p.SubPercent(0.40, 1.00));
 
             p.ReportProgress(1.00);
             return exchangeRates;

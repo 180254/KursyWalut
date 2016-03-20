@@ -44,6 +44,7 @@ namespace KursyWalut.Progress
 
             _lastReported.Set(calculateLastReported + incrValue);
             var cur = _currentValue.Increment(incrValue);
+            _childs.Clear();
 
             NotifyChange(cur);
         }
@@ -79,7 +80,7 @@ namespace KursyWalut.Progress
             _parent?.NotifyChange(value);
         }
 
-        public static IPProgress Master()
+        public static IPProgress NewMaster()
         {
             return new PProgress(0, 10000);
         }
