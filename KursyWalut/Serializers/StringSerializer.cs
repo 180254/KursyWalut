@@ -8,7 +8,6 @@ namespace KursyWalut.Serializers
         {
             var writer = new BinaryWriter(stream);
             writer.Write(obj);
-            writer.Flush();
         }
 
         public string Deserialize(Stream stream)

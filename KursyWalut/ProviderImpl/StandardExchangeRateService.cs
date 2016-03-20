@@ -5,19 +5,26 @@ using System.Diagnostics;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using KursyWalut.Cache;
 using KursyWalut.Model;
 using KursyWalut.Progress;
 using KursyWalut.Provider;
 
 namespace KursyWalut.ProviderImpl
 {
-    internal class StandardExchangeRateService : IExchangeRatesService
+    internal class StandardExchangeRateService : IExchangeRatesService, ICacheable
     {
         private readonly IExchangeRatesProvider _exchangeRatesProvider;
 
         public StandardExchangeRateService(IExchangeRatesProvider exchangeRatesProvider)
         {
             _exchangeRatesProvider = exchangeRatesProvider;
+        }
+
+        public void FlushCache(IPProgress p)
+        {
+            (_exchangeRatesProvider as ICacheable)?.FlushCache(p);
+            p.ReportProgress(1.00);
         }
 
         public async Task<IList<int>> GetAvailableYears(IPProgress p)
@@ -97,6 +104,7 @@ namespace KursyWalut.ProviderImpl
             }
 
             var workDone = await Task.WhenAll(work);
+
             p.ReportProgress(1.00);
             return workDone.SelectMany(x => x).ToImmutableList();
         }
@@ -106,7 +114,6 @@ namespace KursyWalut.ProviderImpl
         {
             var work = new List<Task<ExchangeRate>>();
             var waitFor = Environment.ProcessorCount*10;
-            var minWork = waitFor*2/3;
 
             for (var i = 0; i < days.Count; i++)
             {
@@ -114,12 +121,13 @@ namespace KursyWalut.ProviderImpl
                 var progress = p.SubPart(i, days.Count);
                 work.Add(GetExchangeRate(currency, day, progress));
 
-                SpinWait.SpinUntil(() => work.Count(w => !w.IsCompleted) < minWork);
+                SpinWait.SpinUntil(() => work.Count(w => !w.IsCompleted) < waitFor);
 //                if (i%waitFor == 0) await Task.WhenAll(work);
                 if (i%(days.Count/10) == 0) Debug.WriteLine("DL-" + i);
             }
 
             var workDone = await Task.WhenAll(work);
+
             p.ReportProgress(1.00);
             return workDone.ToImmutableList();
         }

@@ -15,20 +15,21 @@ namespace KursyWalut.Progress
         private readonly Integer _currentValue;
         private readonly Integer _lastReported;
 
-        private PProgress(int @from, int to, PProgress parent, Integer currentValue)
+
+        public PProgress(int from, int to) : this(from, to, null, 0)
         {
-            From = @from;
+        }
+
+        private PProgress(int from, int to, PProgress parent, Integer currentValue)
+        {
+            From = from;
             To = to;
 
             _parent = parent;
             _childs = new List<PProgress>();
 
             _currentValue = currentValue;
-            _lastReported = new Integer(0);
-        }
-
-        public PProgress(int @from, int to) : this(from, to, null, new Integer(0))
-        {
+            _lastReported = 0;
         }
 
         public int CurrentValue => _currentValue.Get();

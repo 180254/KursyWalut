@@ -9,7 +9,6 @@ namespace KursyWalut.Serializers
         {
             var writer = new BinaryWriter(stream);
             writer.Write(obj.ToBinary());
-            writer.Flush();
         }
 
         public DateTime Deserialize(Stream stream)

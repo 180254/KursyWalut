@@ -3,7 +3,7 @@ using System.IO;
 
 namespace KursyWalut.Serializers
 {
-    internal class DictionarySerializer<TK, TV> : ISerializer<Dictionary<TK, TV>>
+    internal class DictionarySerializer<TK, TV> : ISerializer<IDictionary<TK, TV>>
     {
         private readonly ISerializer<TK> _tkSerializer;
         private readonly ISerializer<TV> _tvSerializer;
@@ -16,27 +16,28 @@ namespace KursyWalut.Serializers
             _tvSerializer = tvSerializer;
         }
 
-        public void Serialize(Dictionary<TK, TV> obj, Stream stream)
+        public void Serialize(IDictionary<TK, TV> obj, Stream stream)
         {
             var writer = new BinaryWriter(stream);
 
-            writer.Write(obj.Count);
-            foreach (var kvp in obj)
+            var enumerator = obj.GetEnumerator();
+            while (enumerator.MoveNext())
             {
+                var kvp = enumerator.Current;
+                writer.Write(true);
                 _tkSerializer.Serialize(kvp.Key, stream);
                 _tvSerializer.Serialize(kvp.Value, stream);
             }
 
-            writer.Flush();
+            writer.Write(false);
         }
 
-        public Dictionary<TK, TV> Deserialize(Stream stream)
+        public IDictionary<TK, TV> Deserialize(Stream stream)
         {
             var reader = new BinaryReader(stream);
 
-            var count = reader.ReadInt32();
-            var dictionary = new Dictionary<TK, TV>(count);
-            for (var n = 0; n < count; n++)
+            var dictionary = new Dictionary<TK, TV>();
+            while (reader.ReadBoolean())
             {
                 var key = _tkSerializer.Deserialize(stream);
                 var value = _tvSerializer.Deserialize(stream);

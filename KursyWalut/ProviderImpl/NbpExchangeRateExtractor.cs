@@ -11,9 +11,14 @@ using KursyWalut.Model;
 
 namespace KursyWalut.ProviderImpl
 {
-    internal class NbpExchangeRateExtractor
+    internal class NbpExchangeRateExtractor : IDisposable
     {
         private readonly HttpClient _client = new HttpClient();
+
+        public void Dispose()
+        {
+            _client.Dispose();
+        }
 
         /// <exception cref="T:System.Exception">If something go wrong.</exception>
         public async Task<string> GetHttpResponse(string requestUri, Encoding encoding)

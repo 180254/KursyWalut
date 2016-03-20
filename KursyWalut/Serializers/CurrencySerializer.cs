@@ -11,7 +11,6 @@ namespace KursyWalut.Serializers
             writer.Write(obj.Code);
             writer.Write(obj.Name);
             writer.Write(obj.Multiplier);
-            writer.Flush();
         }
 
         public Currency Deserialize(Stream stream)

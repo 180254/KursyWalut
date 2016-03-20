@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.IO;
@@ -13,7 +14,7 @@ using KursyWalut.Provider;
 
 namespace KursyWalut.ProviderImpl
 {
-    internal class NbpExchangeRatesProvider : IExchangeRatesProvider
+    internal class NbpExchangeRatesProvider : IExchangeRatesProvider, ICacheable
     {
         private readonly Encoding _utf8;
         private readonly Encoding _iso88592;
@@ -24,25 +25,33 @@ namespace KursyWalut.ProviderImpl
 
         private readonly ICache _cache;
         private readonly IDictionary<DateTime, string> _dayToFilename;
+
         // -----------------------------------------------------------------------------------------
 
-        public NbpExchangeRatesProvider(ICache cache)
+        public NbpExchangeRatesProvider(ICache cache, IPProgress p)
         {
             Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
-            _utf8 = Encoding.UTF8;
+            _utf8 = new UTF8Encoding(false);
             _iso88592 = Encoding.GetEncoding("ISO-8859-2");
 
             _extractor = new NbpExchangeRateExtractor();
 
             _cache = cache;
-            _dayToFilename = cache.Get("_dayToFilename", () => new Dictionary<DateTime, string>());
+            _dayToFilename = cache.Get<IDictionary<DateTime, string>>(nameof(_dayToFilename),
+                () => new ConcurrentDictionary<DateTime, string>());
+            p.ReportProgress(1.00);
+        }
+
+        public void FlushCache(IPProgress p)
+        {
+            _cache.Store(nameof(_dayToFilename), _dayToFilename);
+            p.ReportProgress(1.00);
         }
 
         // -----------------------------------------------------------------------------------------
 
         public async Task<IList<int>> GetAvailableYears(IPProgress p)
         {
-            p.ReportProgress(0.00);
             const int startYear = 2002;
             var endYear = DateTime.Now.Year;
             var years = Enumerable.Range(startYear, endYear - startYear + 1).ToImmutableList();
@@ -55,15 +64,14 @@ namespace KursyWalut.ProviderImpl
         {
             try
             {
-                p.ReportProgress(0.00);
                 var availYears = await GetAvailableYears(p.SubPercent(0.00, 0.15));
                 var first = availYears.First(y => y.Equals(year)); // possible InvalidOperationException
 
                 var year2 = year == DateTime.Now.Year ? "" : year.ToString();
                 var dir = await _extractor.GetHttpResponse("http://www.nbp.pl/kursy/xml/dir" + year2 + ".txt", _utf8);
                 var filenames = _extractor.ParseFilenames(dir);
-
                 p.ReportProgress(0.70);
+
                 var result = new List<DateTime>();
                 foreach (var filename in filenames.Where(f => f.StartsWith("a")))
                 {
@@ -71,8 +79,6 @@ namespace KursyWalut.ProviderImpl
                     _dayToFilename.Add(day, filename);
                     result.Add(day);
                 }
-
-                _cache.Store(nameof(_dayToFilename), _dayToFilename);
 
                 p.ReportProgress(1.00);
                 return result.AsReadOnly();
@@ -94,7 +100,6 @@ namespace KursyWalut.ProviderImpl
         {
             try
             {
-                p.ReportProgress(0.00);
                 var filename = _dayToFilename[day]; // possible KeyNotFoundException
                 var response =
                     await _extractor.GetHttpResponse("http://www.nbp.pl/kursy/xml/" + filename + ".xml", _iso88592);

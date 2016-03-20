@@ -34,5 +34,10 @@
         {
             return $"[Code: {Code}, Name: {Name}, Multiplier: {Multiplier}]";
         }
+
+        public static Currency DummyForCode(string code)
+        {
+            return new Currency(code, string.Empty, 1);
+        }
     }
 }

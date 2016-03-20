@@ -100,6 +100,7 @@
     </Compile>
     <Compile Include="Cache\ICache.cs" />
     <Compile Include="Cache\InMemCache.cs" />
+    <Compile Include="Cache\LocalStorageCache.cs" />
     <Compile Include="MainPage.xaml.cs">
       <DependentUpon>MainPage.xaml</DependentUpon>
     </Compile>
@@ -108,6 +109,7 @@
     <Compile Include="Progress\IPProgress.cs" />
     <Compile Include="Progress\Integer.cs" />
     <Compile Include="Progress\PProgress.cs" />
+    <Compile Include="Cache\ICacheable.cs" />
     <Compile Include="Provider\IExchangeRatesService.cs" />
     <Compile Include="Provider\IExchangeRatesProvider.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />

@@ -19,8 +19,6 @@ namespace KursyWalut.Serializers
 
             foreach (var o in obj)
                 _tSerializer.Serialize(o, stream);
-
-            writer.Flush();
         }
 
         public IList<T> Deserialize(Stream stream)

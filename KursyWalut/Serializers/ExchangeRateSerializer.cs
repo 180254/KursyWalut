@@ -23,7 +23,6 @@ namespace KursyWalut.Serializers
             _dateTimeSerializer.Serialize(obj.Day, stream);
             _currencySerializer.Serialize(obj.Currency, stream);
             writer.Write(obj.AverageRate);
-            writer.Flush();
         }
 
         public ExchangeRate Deserialize(Stream stream)
