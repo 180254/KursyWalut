@@ -37,6 +37,8 @@ namespace KursyWalut.Progress
 
         public void ReportProgress(double percent)
         {
+            if (percent < 0.00) NotifyChange(-1);
+
             var computePercent = ComputePercent(percent);
             var calculateLastReported = CalculateLastReported();
 
