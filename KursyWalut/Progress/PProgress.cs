@@ -1,13 +1,13 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 
 namespace KursyWalut.Progress
 {
     internal class PProgress : IPProgress
     {
-        public readonly int From;
-        public readonly int To;
+        public readonly int MaxValue;
 
         private readonly PProgress _parent;
         private readonly IList<PProgress> _childs;
@@ -15,15 +15,13 @@ namespace KursyWalut.Progress
         private readonly Integer _currentValue;
         private readonly Integer _lastReported;
 
-
-        public PProgress(int from, int to) : this(from, to, null, 0)
+        public PProgress(int maxValue) : this(maxValue, null, 0)
         {
         }
 
-        private PProgress(int from, int to, PProgress parent, Integer currentValue)
+        private PProgress(int maxValue, PProgress parent, Integer currentValue)
         {
-            From = from;
-            To = to;
+            MaxValue = maxValue;
 
             _parent = parent;
             _childs = new List<PProgress>();
@@ -43,6 +41,7 @@ namespace KursyWalut.Progress
             var calculateLastReported = CalculateLastReported();
 
             var incrValue = computePercent - calculateLastReported;
+            if (incrValue <= 0) return;
 
             _lastReported.Set(calculateLastReported + incrValue);
             var cur = _currentValue.Increment(incrValue);
@@ -57,7 +56,7 @@ namespace KursyWalut.Progress
             if (!(percentTo >= 0 && percentTo <= 100)) throw new ArgumentOutOfRangeException(nameof(percentTo));
             if (percentFrom > percentTo) throw new ArgumentException(nameof(percentFrom) + " < " + nameof(percentTo));
 
-            var child = new PProgress(ComputePercent(percentFrom), ComputePercent(percentTo), this, _currentValue);
+            var child = new PProgress(ComputePercent(percentTo - percentFrom), this, _currentValue);
             _childs.Add(child);
             return child;
         }
@@ -84,12 +83,12 @@ namespace KursyWalut.Progress
 
         public static IPProgress NewMaster()
         {
-            return new PProgress(0, 10000);
+            return new PProgress(10000);
         }
 
         private int ComputePercent(double percent)
         {
-            return (int) Math.Round((To - From)*percent);
+            return (int) Math.Round(MaxValue*percent);
         }
     }
 }

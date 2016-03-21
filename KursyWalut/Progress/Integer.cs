@@ -23,7 +23,7 @@ namespace KursyWalut.Progress
 
         public int Set(int value)
         {
-            return _value = value;
+           return Interlocked.Exchange(ref _value, value);
         }
 
         public int Increment(int incr)
