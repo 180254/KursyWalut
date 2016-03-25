@@ -3,7 +3,7 @@ using KursyWalut.Model;
 
 namespace KursyWalut.Serializers
 {
-    internal class CurrencySerializer : ISerializer<Currency>
+    public class CurrencySerializer : ISerializer<Currency>
     {
         public void Serialize(Currency obj, Stream stream)
         {

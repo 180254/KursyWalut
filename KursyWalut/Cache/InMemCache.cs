@@ -3,7 +3,7 @@ using System.Collections.Generic;
 
 namespace KursyWalut.Cache
 {
-    internal class InMemCache : ICache
+    public class InMemCache : ICache
     {
         private readonly IDictionary<string, object> _dict = new Dictionary<string, object>();
 

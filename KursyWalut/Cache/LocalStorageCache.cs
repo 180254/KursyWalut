@@ -11,7 +11,7 @@ namespace KursyWalut.Cache
     /// Impl-dependent!
     /// All used serializers must be defined and registered.
     /// GetStandard() returns LocalStorageCache with serializers used in project.
-    internal class LocalStorageCache : ICache
+    public class LocalStorageCache : ICache
     {
         private readonly StorageFolder _localFolder = ApplicationData.Current.LocalFolder;
         private readonly IDictionary<Type, object> _serializers = new ConcurrentDictionary<Type, object>();
@@ -96,7 +96,7 @@ namespace KursyWalut.Cache
                     lsc.GetSerializer<IList<ExchangeRate>>()));
 
             // IDictionary<DateTime, string>
-            lsc.RegisterSerializer(
+            lsc.RegisterSerializer<IDictionary<DateTime, string>> (
                 new DictionarySerializer<DateTime, string>(
                     lsc.GetSerializer<DateTime>(),
                     lsc.GetSerializer<string>()));

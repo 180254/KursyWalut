@@ -3,7 +3,7 @@ using System.IO;
 
 namespace KursyWalut.Serializers
 {
-    internal class DictionarySerializer<TK, TV> : ISerializer<IDictionary<TK, TV>>
+    public class DictionarySerializer<TK, TV> : ISerializer<IDictionary<TK, TV>>
     {
         private readonly ISerializer<TK> _tkSerializer;
         private readonly ISerializer<TV> _tvSerializer;

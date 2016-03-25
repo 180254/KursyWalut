@@ -4,7 +4,7 @@ using KursyWalut.Model;
 
 namespace KursyWalut.Serializers
 {
-    internal class ExchangeRateSerializer : ISerializer<ExchangeRate>
+    public class ExchangeRateSerializer : ISerializer<ExchangeRate>
     {
         private readonly ISerializer<DateTime> _dateTimeSerializer;
         private readonly ISerializer<Currency> _currencySerializer;

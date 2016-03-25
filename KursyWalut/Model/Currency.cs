@@ -1,17 +1,17 @@
 ﻿namespace KursyWalut.Model
 {
-    internal class Currency
+    public class Currency
     {
-        public readonly string Code;
-        public readonly string Name;
-        public readonly int Multiplier;
-
         public Currency(string code, string name, int multiplier)
         {
             Code = code;
             Name = name;
             Multiplier = multiplier;
         }
+
+        public string Code { get; }
+        public string Name { get; }
+        public int Multiplier { get; }
 
         protected bool Equals(Currency other)
         {

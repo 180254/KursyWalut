@@ -3,7 +3,7 @@ using System.IO;
 
 namespace KursyWalut.Serializers
 {
-    internal class ListSerializer<T> : ISerializer<IList<T>>
+    public class ListSerializer<T> : ISerializer<IList<T>>
     {
         private readonly ISerializer<T> _tSerializer;
 

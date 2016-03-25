@@ -14,7 +14,7 @@ using KursyWalut.Provider;
 
 namespace KursyWalut.ProviderImpl
 {
-    internal class NbpExchangeRatesProvider : IExchangeRatesProvider, ICacheable
+    public class NbpExchangeRatesProvider : IExchangeRatesProvider, ICacheable
     {
         private readonly Encoding _utf8;
         private readonly Encoding _iso88592;
@@ -38,13 +38,13 @@ namespace KursyWalut.ProviderImpl
 
             _cache = cache;
             _dayToFilename = cache.Get<IDictionary<DateTime, string>>(nameof(_dayToFilename),
-                () => new ConcurrentDictionary<DateTime, string>());
+                () => new Dictionary<DateTime, string>());
             p.ReportProgress(1.00);
         }
 
         public void FlushCache(IPProgress p)
         {
-            _cache.Store(nameof(_dayToFilename), _dayToFilename);
+            _cache.Store< IDictionary<DateTime, string>>(nameof(_dayToFilename), _dayToFilename);
             p.ReportProgress(1.00);
         }
 

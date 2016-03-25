@@ -2,7 +2,7 @@
 
 namespace KursyWalut.Serializers
 {
-    internal class StringSerializer : ISerializer<string>
+    public class StringSerializer : ISerializer<string>
     {
         public void Serialize(string obj, Stream stream)
         {

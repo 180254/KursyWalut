@@ -3,7 +3,7 @@ using System.IO;
 
 namespace KursyWalut.Serializers
 {
-    internal class DateTimeSerializer : ISerializer<DateTime>
+    public class DateTimeSerializer : ISerializer<DateTime>
     {
         public void Serialize(DateTime obj, Stream stream)
         {

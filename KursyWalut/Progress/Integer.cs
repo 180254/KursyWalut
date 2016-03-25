@@ -1,8 +1,9 @@
-﻿using System.Threading;
+﻿using System.ComponentModel;
+using System.Threading;
 
 namespace KursyWalut.Progress
 {
-    internal class Integer
+    public class Integer : INotifyPropertyChanged
     {
         private int _value;
 
@@ -10,6 +11,10 @@ namespace KursyWalut.Progress
         {
             _value = value;
         }
+
+        public int Value => _value;
+
+        public event PropertyChangedEventHandler PropertyChanged;
 
         public static implicit operator Integer(int value)
         {
@@ -23,17 +28,26 @@ namespace KursyWalut.Progress
 
         public int Set(int value)
         {
-           return Interlocked.Exchange(ref _value, value);
+            var ret = Interlocked.Exchange(ref _value, value);
+            OnPropertyChanged();
+            return ret;
         }
 
         public int Increment(int incr)
         {
-            return Interlocked.Add(ref _value, incr);
+            var ret = Interlocked.Add(ref _value, incr); OnPropertyChanged();
+            return ret;
         }
 
         public int Decrement(int decr)
         {
-            return Interlocked.Add(ref _value, -decr);
+            var ret = Interlocked.Add(ref _value, -decr); OnPropertyChanged();
+            return ret;
+        }
+
+        protected virtual void OnPropertyChanged(string propertyName = "")
+        {
+            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
         }
     }
 }

@@ -6,7 +6,7 @@ using KursyWalut.Progress;
 
 namespace KursyWalut.Provider
 {
-    internal interface IExchangeRatesService : IExchangeRatesProvider
+    public interface IExchangeRatesService : IExchangeRatesProvider
     {
         /// <exception cref="T:System.ArgumentException">Invalid currency.</exception>
         /// <exception cref="T:System.ArgumentException">Day was not returned by GetAvailableDays(day.year).</exception>
@@ -18,6 +18,9 @@ namespace KursyWalut.Provider
 
         /// <exception cref="T:System.IO.IOException">Something go wrong with I/O.</exception>
         Task<DateTime> GetLastAvailableDay(IPProgress p);
+
+        /// <exception cref="T:System.IO.IOException">Something go wrong with I/O.</exception>
+        Task<IList<DateTime>> GetAllAvailablesDay(IPProgress p);
 
         /// <exception cref="T:System.ArgumentException">Invalid currency.</exception>
         /// <exception cref="T:System.ArgumentException">Start.day &gt; stop.day.</exception>

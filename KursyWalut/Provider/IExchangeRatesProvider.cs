@@ -6,7 +6,7 @@ using KursyWalut.Progress;
 
 namespace KursyWalut.Provider
 {
-    internal interface IExchangeRatesProvider
+    public interface IExchangeRatesProvider
     {
         /// <exception cref="T:System.IO.IOException">Something go wrong with I/O.</exception>
         Task<IList<int>> GetAvailableYears(IPProgress p);

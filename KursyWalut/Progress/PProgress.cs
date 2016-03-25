@@ -1,11 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Linq;
 
 namespace KursyWalut.Progress
 {
-    internal class PProgress : IPProgress
+    public class PProgress : IPProgress
     {
         public readonly int MaxValue;
 

@@ -12,7 +12,7 @@ using KursyWalut.Provider;
 
 namespace KursyWalut.ProviderImpl
 {
-    internal class StandardExchangeRateService : IExchangeRatesService, ICacheable
+    public class StandardExchangeRateService : IExchangeRatesService, ICacheable
     {
         private readonly IExchangeRatesProvider _exchangeRatesProvider;
 
@@ -71,6 +71,16 @@ namespace KursyWalut.ProviderImpl
             var lastYear = (await GetAvailableYears(p.SubPercent(0.00, 0.40))).Last();
             var lastDate = (await GetAvailableDays(lastYear, p.SubPercent(0.40, 1.00))).Last();
             return lastDate;
+        }
+
+        public async Task<IList<DateTime>> GetAllAvailablesDay(IPProgress p)
+        {
+            var firstYear = (await GetAvailableYears(p.SubPercent(0.00, 0.05))).First();
+            var lastYear = (await GetAvailableYears(p.SubPercent(0.05, 0.10))).Last();
+            var availableDays = await GetDaysBetweenYears(firstYear, lastYear, p.SubPercent(0.10, 1.00));
+            p.ReportProgress(1.00);
+            return availableDays;
+
         }
 
         public async Task<IList<ExchangeRate>> GetExchangeRateHistory(

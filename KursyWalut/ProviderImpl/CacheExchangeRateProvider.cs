@@ -8,7 +8,7 @@ using KursyWalut.Provider;
 
 namespace KursyWalut.ProviderImpl
 {
-    internal class CacheExchangeRateProvider : IExchangeRatesProvider, ICacheable
+    public class CacheExchangeRateProvider : IExchangeRatesProvider, ICacheable
     {
         private readonly IExchangeRatesProvider _exchangeRatesProvider;
 

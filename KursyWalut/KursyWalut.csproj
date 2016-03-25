@@ -104,6 +104,8 @@
     <Compile Include="MainPage.xaml.cs">
       <DependentUpon>MainPage.xaml</DependentUpon>
     </Compile>
+    <Compile Include="Properties\Annotations.cs" />
+    <Compile Include="ViewModel\MainViewModel.cs" />
     <Compile Include="Model\ExchangeRate.cs" />
     <Compile Include="Model\Currency.cs" />
     <Compile Include="Progress\IPProgress.cs" />
@@ -125,6 +127,7 @@
     <Compile Include="Serializers\ISerializer.cs" />
     <Compile Include="Serializers\LIstSerializer.cs" />
     <Compile Include="Serializers\StringSerializer.cs" />
+    <Compile Include="ViewModel\ViewModelLocator.cs" />
   </ItemGroup>
   <ItemGroup>
     <AppxManifest Include="Package.appxmanifest">

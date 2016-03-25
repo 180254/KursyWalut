@@ -2,7 +2,7 @@
 
 namespace KursyWalut.Cache
 {
-    internal interface ICache
+    public interface ICache
     {
         /// Info: default_ is invoked(computed), it will be not stored.
         /// <exception cref="T:System.InvalidCastException">Value for <paramref name="key" /> is not of type T.</exception>

@@ -11,7 +11,7 @@ using KursyWalut.Model;
 
 namespace KursyWalut.ProviderImpl
 {
-    internal class NbpExchangeRateExtractor : IDisposable
+    public class NbpExchangeRateExtractor : IDisposable
     {
         private readonly HttpClient _client = new HttpClient();
 

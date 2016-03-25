@@ -2,7 +2,7 @@
 
 namespace KursyWalut.Progress
 {
-    internal interface IPProgress
+    public interface IPProgress
     {
         int CurrentValue { get; }
 
