@@ -2,7 +2,7 @@
 using System.IO;
 using System.Threading;
 using Windows.Storage;
-using KursyWalut.Serializers;
+using KursyWalut.Serializer;
 
 namespace KursyWalut.Cache
 {

@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using KursyWalut.Cache;
 using KursyWalut.Model;
-using KursyWalut.Serializers;
+using KursyWalut.Serializer;
 
 namespace KursyWalut.Helper
 {

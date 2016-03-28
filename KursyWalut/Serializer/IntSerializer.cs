@@ -1,6 +1,6 @@
 ﻿using System.IO;
 
-namespace KursyWalut.Serializers
+namespace KursyWalut.Serializer
 {
     public class IntSerializer : ISerializer<int>
     {

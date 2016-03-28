@@ -2,7 +2,7 @@
 using System.IO;
 using KursyWalut.Model;
 
-namespace KursyWalut.Serializers
+namespace KursyWalut.Serializer
 {
     public class ExchangeRateSerializer : ISerializer<ExchangeRate>
     {

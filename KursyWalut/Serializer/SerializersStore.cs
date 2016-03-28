@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 
-namespace KursyWalut.Serializers
+namespace KursyWalut.Serializer
 {
     public class SerializersStore
     {

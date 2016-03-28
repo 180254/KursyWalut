@@ -1,7 +1,7 @@
 ﻿using System.Collections.Generic;
 using System.IO;
 
-namespace KursyWalut.Serializers
+namespace KursyWalut.Serializer
 {
     public class DictionarySerializer<TK, TV> : ISerializer<IDictionary<TK, TV>>
     {

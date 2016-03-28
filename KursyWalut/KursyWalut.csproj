@@ -17,6 +17,7 @@
     <FileAlignment>512</FileAlignment>
     <ProjectTypeGuids>{A5A43C5B-DE2A-4C0C-9213-0A381AF9435A};{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}</ProjectTypeGuids>
     <PackageCertificateKeyFile>KursyWalut_TemporaryKey.pfx</PackageCertificateKeyFile>
+    <PackageCertificateThumbprint>FAC464243D7CBFCDBA459A873DC5C1C888238F03</PackageCertificateThumbprint>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Debug|x86'">
     <DebugSymbols>true</DebugSymbols>
@@ -92,6 +93,7 @@
     <Content Include="ApplicationInsights.config">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
+    <None Include="KursyWalut_TemporaryKey.pfx" />
     <None Include="project.json" />
   </ItemGroup>
   <ItemGroup>
@@ -102,7 +104,7 @@
     <Compile Include="Cache\InMemCache.cs" />
     <Compile Include="Cache\LocalStorageCache.cs" />
     <Compile Include="Helper\CacheHelper.cs" />
-    <Compile Include="Serializers\SerializersStore.cs" />
+    <Compile Include="Serializer\SerializersStore.cs" />
     <Compile Include="MainPage.xaml.cs">
       <DependentUpon>MainPage.xaml</DependentUpon>
     </Compile>
@@ -122,21 +124,20 @@
     <Compile Include="ProviderImpl\NbpExchangeRatesProvider.cs" />
     <Compile Include="ProviderImpl\CacheExchangeRateProvider.cs" />
     <Compile Include="ProviderImpl\StandardExchangeRateService.cs" />
-    <Compile Include="Serializers\CurrencySerializer.cs" />
-    <Compile Include="Serializers\DateTimeSerializer.cs" />
-    <Compile Include="Serializers\DictionarySerializer.cs" />
-    <Compile Include="Serializers\ExchangeRateSerializer.cs" />
-    <Compile Include="Serializers\IntSerializer.cs" />
-    <Compile Include="Serializers\ISerializer.cs" />
-    <Compile Include="Serializers\LIstSerializer.cs" />
-    <Compile Include="Serializers\StringSerializer.cs" />
+    <Compile Include="Serializer\CurrencySerializer.cs" />
+    <Compile Include="Serializer\DateTimeSerializer.cs" />
+    <Compile Include="Serializer\DictionarySerializer.cs" />
+    <Compile Include="Serializer\ExchangeRateSerializer.cs" />
+    <Compile Include="Serializer\IntSerializer.cs" />
+    <Compile Include="Serializer\ISerializer.cs" />
+    <Compile Include="Serializer\LIstSerializer.cs" />
+    <Compile Include="Serializer\StringSerializer.cs" />
     <Compile Include="ViewModel\ViewModelLocator.cs" />
   </ItemGroup>
   <ItemGroup>
     <AppxManifest Include="Package.appxmanifest">
       <SubType>Designer</SubType>
     </AppxManifest>
-    <None Include="KursyWalut_TemporaryKey.pfx" />
   </ItemGroup>
   <ItemGroup>
     <Content Include="Properties\Default.rd.xml" />
