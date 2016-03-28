@@ -16,6 +16,12 @@ namespace KursyWalut.Serializers
             _tvSerializer = tvSerializer;
         }
 
+        public DictionarySerializer(SerializersStore store) : this(
+            store.GetSerializer<TK>(),
+            store.GetSerializer<TV>())
+        {
+        }
+
         public void Serialize(IDictionary<TK, TV> obj, Stream stream)
         {
             var writer = new BinaryWriter(stream);

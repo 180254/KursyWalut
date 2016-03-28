@@ -80,7 +80,6 @@ namespace KursyWalut.ProviderImpl
             var availableDays = await GetDaysBetweenYears(firstYear, lastYear, p.SubPercent(0.10, 1.00));
             p.ReportProgress(1.00);
             return availableDays;
-
         }
 
         public async Task<IList<ExchangeRate>> GetExchangeRateHistory(

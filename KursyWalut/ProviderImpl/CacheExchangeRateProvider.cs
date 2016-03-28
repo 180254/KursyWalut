@@ -11,8 +11,8 @@ namespace KursyWalut.ProviderImpl
     public class CacheExchangeRateProvider : IExchangeRatesProvider, ICacheable
     {
         private readonly IExchangeRatesProvider _exchangeRatesProvider;
-
         private readonly ICache _cache;
+
         private IList<int> _availYears;
         private readonly IDictionary<int, IList<DateTime>> _yearToDays;
         private readonly IDictionary<DateTime, IList<ExchangeRate>> _dayToEr;
@@ -22,16 +22,16 @@ namespace KursyWalut.ProviderImpl
             _exchangeRatesProvider = exchangeRatesProvider;
             _cache = cache;
 
-            _availYears = cache.Get<IList<int>>(nameof(_availYears),
-                () => null);
+            _availYears = cache.Get<IList<int>>(
+                nameof(_availYears), () => null);
             p.ReportProgress(0.20);
 
-            _yearToDays = cache.Get<IDictionary<int, IList<DateTime>>>(nameof(_yearToDays),
-                () => new Dictionary<int, IList<DateTime>>());
+            _yearToDays = cache.Get<IDictionary<int, IList<DateTime>>>(
+                nameof(_yearToDays), () => new Dictionary<int, IList<DateTime>>());
             p.ReportProgress(0.40);
 
-            _dayToEr = cache.Get<IDictionary<DateTime, IList<ExchangeRate>>>(nameof(_dayToEr),
-                () => new Dictionary<DateTime, IList<ExchangeRate>>());
+            _dayToEr = cache.Get<IDictionary<DateTime, IList<ExchangeRate>>>(
+                nameof(_dayToEr), () => new Dictionary<DateTime, IList<ExchangeRate>>());
             p.ReportProgress(1.00);
         }
 
@@ -66,7 +66,7 @@ namespace KursyWalut.ProviderImpl
                 () => _exchangeRatesProvider.GetExchangeRates(day, p), p);
         }
 
-        private async Task<TV> GetOrCalculate<TK, TV>(
+        private static async Task<TV> GetOrCalculate<TK, TV>(
             IDictionary<TK, TV> dict,
             TK key, Func<Task<TV>> valueSup,
             IPProgress p)

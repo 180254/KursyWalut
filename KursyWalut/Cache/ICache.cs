@@ -4,7 +4,7 @@ namespace KursyWalut.Cache
 {
     public interface ICache
     {
-        /// Info: default_ is invoked(computed), it will be not stored.
+        /// Info: default_ will be not stored, if computed.
         /// <exception cref="T:System.InvalidCastException">Value for <paramref name="key" /> is not of type T.</exception>
         /// <exception cref="T:System.IO.IOException">Something go wrong with I/O.</exception>
         T Get<T>(string key, Func<T> default_);

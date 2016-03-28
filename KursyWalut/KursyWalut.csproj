@@ -101,11 +101,13 @@
     <Compile Include="Cache\ICache.cs" />
     <Compile Include="Cache\InMemCache.cs" />
     <Compile Include="Cache\LocalStorageCache.cs" />
+    <Compile Include="Helper\CacheHelper.cs" />
+    <Compile Include="Serializers\SerializersStore.cs" />
     <Compile Include="MainPage.xaml.cs">
       <DependentUpon>MainPage.xaml</DependentUpon>
     </Compile>
     <Compile Include="Properties\Annotations.cs" />
-    <Compile Include="ProviderImpl\ProviderHelper.cs" />
+    <Compile Include="Helper\ProviderHelper.cs" />
     <Compile Include="ViewModel\MainViewModel.cs" />
     <Compile Include="Model\ExchangeRate.cs" />
     <Compile Include="Model\Currency.cs" />

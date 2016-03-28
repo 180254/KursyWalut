@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.IO;
@@ -37,14 +36,14 @@ namespace KursyWalut.ProviderImpl
             _extractor = new NbpExchangeRateExtractor();
 
             _cache = cache;
-            _dayToFilename = cache.Get<IDictionary<DateTime, string>>(nameof(_dayToFilename),
-                () => new Dictionary<DateTime, string>());
+            _dayToFilename = cache.Get<IDictionary<DateTime, string>>(
+                nameof(_dayToFilename), () => new Dictionary<DateTime, string>());
             p.ReportProgress(1.00);
         }
 
         public void FlushCache(IPProgress p)
         {
-            _cache.Store< IDictionary<DateTime, string>>(nameof(_dayToFilename), _dayToFilename);
+            _cache.Store(nameof(_dayToFilename), _dayToFilename);
             p.ReportProgress(1.00);
         }
 
@@ -65,6 +64,7 @@ namespace KursyWalut.ProviderImpl
             try
             {
                 var availYears = await GetAvailableYears(p.SubPercent(0.00, 0.15));
+                // ReSharper disable once UnusedVariable
                 var first = availYears.First(y => y.Equals(year)); // possible InvalidOperationException
 
                 var year2 = year == DateTime.Now.Year ? "" : year.ToString();
@@ -73,7 +73,7 @@ namespace KursyWalut.ProviderImpl
                 p.ReportProgress(0.70);
 
                 var result = new List<DateTime>();
-                foreach (var filename in filenames.Where(f => f.StartsWith("a")))
+                foreach (var filename in filenames.Where(f => f.StartsWith("a", StringComparison.Ordinal)))
                 {
                     var day = _extractor.ParseDateTime(filename);
                     _dayToFilename.Add(day, filename);

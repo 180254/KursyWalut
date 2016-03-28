@@ -12,6 +12,11 @@ namespace KursyWalut.Serializers
             _tSerializer = tSerializer;
         }
 
+        public ListSerializer(SerializersStore store) : this(
+            store.GetSerializer<T>())
+        {
+        }
+
         public void Serialize(IList<T> obj, Stream stream)
         {
             var writer = new BinaryWriter(stream);

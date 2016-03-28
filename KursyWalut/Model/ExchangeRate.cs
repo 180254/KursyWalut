@@ -11,16 +11,13 @@ namespace KursyWalut.Model
             AverageRate = averageRate;
         }
 
-        public double AverageRate { get; }
-
         public DateTime Day { get; }
         public Currency Currency { get; }
-
-        public string AvarageRateF => string.Format("{0:0.000}", AverageRate);
+        public double AverageRate { get; }
 
         public override string ToString()
         {
-            return $"[Day: {Day}, Currency: {Currency}, AverageRate: {AvarageRateF}]";
+            return $"[Day: {Day}, Currency: {Currency}, AverageRate: {AverageRate}]";
         }
     }
 }

@@ -1,15 +1,10 @@
 ﻿using System;
-using System.Collections;
 using System.Diagnostics;
 using Windows.ApplicationModel;
 using Windows.ApplicationModel.Activation;
 using Windows.UI.Xaml;
 using Windows.UI.Xaml.Controls;
 using Windows.UI.Xaml.Navigation;
-using KursyWalut.Cache;
-using KursyWalut.Model;
-using KursyWalut.Progress;
-using KursyWalut.ProviderImpl;
 using Microsoft.ApplicationInsights;
 
 namespace KursyWalut
@@ -30,146 +25,6 @@ namespace KursyWalut
                 WindowsCollectors.Session);
             InitializeComponent();
             Suspending += OnSuspending;
-
-
-
-//            //            var cache = new InMemCache();
-//            var cache = LocalStorageCache.GetStandard();
-//
-//            var nbpPr = new NbpExchangeRatesProvider(cache, PProgress.NewMaster());
-//            var cachePr = new CacheExchangeRateProvider(nbpPr, cache, PProgress.NewMaster());
-//            var nbpSe = new StandardExchangeRateService(cachePr);
-//            var prog = PProgress.NewMaster();
-//
-//
-//            Debug.WriteLine("The number of processors on this computer is {0}.",
-//                Environment.ProcessorCount);
-//
-//            var x = nbpSe.GetAvailableDays(2016, prog);
-//            x.Wait();
-//
-//            Debug.WriteLine("-----------------------------------------------------------(A0)");
-//            foreach (var dateTime in x.Result)
-//            {
-//                Debug.WriteLine(dateTime);
-//            }
-//            Debug.WriteLine("-----------------------------------------------------------(A1)");
-//
-//
-//            var r = nbpSe.GetExchangeRates(x.Result[0], prog);
-//            r.Wait();
-//
-//            Debug.WriteLine("-----------------------------------------------------------(B0)");
-//            foreach (var exchangeRate in r.Result)
-//            {
-//                Debug.WriteLine(exchangeRate);
-//            }
-//            Debug.WriteLine("-----------------------------------------------------------(B1)");
-//
-//
-//            var first = nbpSe.GetFirstAvailableDay(prog);
-//            first.Wait();
-//            var last = nbpSe.GetLastAvailableDay(prog);
-//            last.Wait();
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//            var stopwatch = new Stopwatch();
-//            stopwatch.Start();
-//
-//
-//            prog = PProgress.NewMaster();
-//            var progresses = ArrayList.Synchronized(new ArrayList());
-//
-//            prog.ProgressChanged += (sender, changed) => progresses.Add(changed);
-//
-//            var start11 = last.Result.Subtract(TimeSpan.FromDays(365*5));
-////            var start11 = first.Result;
-//
-//            var stopp11 = last.Result;
-//            var currency = new Currency("USD", "", 1);
-//
-//            Debug.WriteLine("->" + start11 + "/" + stopp11);
-//            var exchangeRatesHistory = nbpSe.GetExchangeRateHistory(currency, start11, stopp11,
-//                prog);
-//            exchangeRatesHistory.Wait();
-//
-//
-//            Debug.WriteLine("TIME(0) " + stopwatch.Elapsed);
-//
-//            prog.ProgressChanged += (sender, changed) => Debug.WriteLine("E-"+changed);
-//
-//
-//            nbpSe.FlushCache(PProgress.NewMaster());
-//
-//            Debug.WriteLine("TIME(1) " + stopwatch.Elapsed);
-//
-//
-//            Debug.WriteLine("P-" + progresses.Count + "-" + string.Join(",", progresses.ToArray()));
-//
-//       
-//
-//            Debug.WriteLine("-----------------------------------------------------------(C0)");
-//            foreach (var exchangeRate in exchangeRatesHistory.Result)
-//            {
-////                Debug.WriteLine(exchangeRate);
-//            }
-//
-//            Debug.WriteLine("-----------------------------------------------------------(C1)");
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//            prog = PProgress.NewMaster();
-//            progresses = ArrayList.Synchronized(new ArrayList());
-//            prog.ProgressChanged += (sender, changed) => progresses.Add(changed);
-//
-//            stopwatch.Reset();
-//            var exchangeRatesHistor2y = nbpSe.GetExchangeRateHistory(currency, start11, stopp11,
-//                prog.SubPercent(0.00, 0.80));
-//            exchangeRatesHistor2y.Wait();
-//            nbpSe.FlushCache(prog.SubPercent(0.80, 1.00));
-//
-//            Debug.WriteLine("TIME " + stopwatch.Elapsed);
-//
-//            stopwatch.Stop();
-//
-//            Debug.WriteLine("P-" + progresses.Count + "-" + string.Join(",", progresses.ToArray()));
-//
-//            Debug.WriteLine("-----------------------------------------------------------(D0)");
-//
-//            Debug.WriteLine("TIME " + stopwatch.Elapsed);
-//            Debug.WriteLine("-----------------------------------------------------------(D1)");
         }
 
         /// <summary>

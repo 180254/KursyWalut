@@ -1,11 +1,11 @@
 ﻿using System;
-using System.Collections.Generic;
+using System.Collections.Concurrent;
 
 namespace KursyWalut.Cache
 {
     public class InMemCache : ICache
     {
-        private readonly IDictionary<string, object> _dict = new Dictionary<string, object>();
+        private readonly ConcurrentDictionary<string, object> _dict = new ConcurrentDictionary<string, object>();
 
         public T Get<T>(string key, Func<T> default_)
         {
@@ -20,13 +20,13 @@ namespace KursyWalut.Cache
 
         public void Store<T>(string key, T value)
         {
-            Remove(key);
-            _dict.Add(key, value);
+            _dict.AddOrUpdate(key, value, (oldkey, oldvalue) => value);
         }
 
         public bool Remove(string key)
         {
-            return _dict.Remove(key);
+            object ignored;
+            return _dict.TryRemove(key, out ignored);
         }
 
         public void Clear()

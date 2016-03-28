@@ -22,7 +22,7 @@
         {
             if (ReferenceEquals(null, obj)) return false;
             if (ReferenceEquals(this, obj)) return true;
-            return obj.GetType() == GetType() && Equals((Currency) obj);
+            return (obj.GetType() == GetType()) && Equals((Currency) obj);
         }
 
         public override int GetHashCode()

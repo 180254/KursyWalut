@@ -17,6 +17,12 @@ namespace KursyWalut.Serializers
             _currencySerializer = currencySerializer;
         }
 
+        public ExchangeRateSerializer(SerializersStore store) : this(
+            store.GetSerializer<DateTime>(),
+            store.GetSerializer<Currency>())
+        {
+        }
+
         public void Serialize(ExchangeRate obj, Stream stream)
         {
             var writer = new BinaryWriter(stream);

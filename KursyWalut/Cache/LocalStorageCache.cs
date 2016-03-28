@@ -1,52 +1,73 @@
 ﻿using System;
-using System.Collections.Concurrent;
-using System.Collections.Generic;
 using System.IO;
+using System.Threading;
 using Windows.Storage;
-using KursyWalut.Model;
 using KursyWalut.Serializers;
 
 namespace KursyWalut.Cache
 {
-    /// Impl-dependent!
-    /// All used serializers must be defined and registered.
-    /// GetStandard() returns LocalStorageCache with serializers used in project.
     public class LocalStorageCache : ICache
     {
         private readonly StorageFolder _localFolder = ApplicationData.Current.LocalFolder;
-        private readonly IDictionary<Type, object> _serializers = new ConcurrentDictionary<Type, object>();
 
+        private readonly ReaderWriterLockSlim _lock = new ReaderWriterLockSlim(LockRecursionPolicy.NoRecursion);
+        private readonly TimeSpan _waitTime = TimeSpan.FromSeconds(1);
+        private readonly SerializersStore _serializers;
+
+        /// Warning: register serializer for all types, which will be cached!
+        public LocalStorageCache(SerializersStore serializers)
+        {
+            _serializers = serializers;
+        }
 
         public T Get<T>(string key, Func<T> default_)
         {
-            var file1 = _localFolder.TryGetItemAsync(key);
-            file1.AsTask().Wait();
+            _lock.EnterReadLock();
 
-            var file = file1.GetResults() as IStorageFile;
-            if (file == null) return default_.Invoke();
-
-            var fileStream1 = file.OpenStreamForReadAsync();
-            fileStream1.Wait();
-
-            using (var fileStream = fileStream1.Result)
+            try
             {
-                return Deserialize<T>(fileStream);
+                var file1 = _localFolder.TryGetItemAsync(key);
+                file1.AsTask().Wait(_waitTime);
+
+                var file = file1.GetResults() as IStorageFile;
+                if (file == null) return default_.Invoke();
+
+                var fileStream1 = file.OpenStreamForReadAsync();
+                fileStream1.Wait(_waitTime);
+
+                using (var fileStream = fileStream1.Result)
+                {
+                    return Deserialize<T>(fileStream);
+                }
+            }
+            finally
+            {
+                _lock.ExitReadLock();
             }
         }
 
         public void Store<T>(string key, T value)
         {
-            var file1 = _localFolder.CreateFileAsync(key, CreationCollisionOption.ReplaceExisting);
-            file1.AsTask().Wait();
+            _lock.EnterWriteLock();
 
-            var file = file1.GetResults();
-
-            var fileStream1 = file.OpenStreamForWriteAsync();
-            fileStream1.Wait();
-
-            using (var fileStream = fileStream1.Result)
+            try
             {
-                GetSerializer<T>().Serialize(value, fileStream);
+                var file1 = _localFolder.CreateFileAsync(key, CreationCollisionOption.ReplaceExisting);
+                file1.AsTask().Wait(_waitTime);
+
+                var file = file1.GetResults();
+
+                var fileStream1 = file.OpenStreamForWriteAsync();
+                fileStream1.Wait(_waitTime);
+
+                using (var fileStream = fileStream1.Result)
+                {
+                    Serialize(value, fileStream);
+                }
+            }
+            finally
+            {
+                _lock.ExitWriteLock();
             }
         }
 
@@ -61,68 +82,25 @@ namespace KursyWalut.Cache
         }
 
 
-        public static LocalStorageCache GetStandard()
+        private void Serialize<T>(T value, Stream fileStream)
         {
-            var lsc = new LocalStorageCache();
-
-            lsc.RegisterSerializer(new CurrencySerializer());
-            lsc.RegisterSerializer(new DateTimeSerializer());
-            lsc.RegisterSerializer(new StringSerializer());
-            lsc.RegisterSerializer(new IntSerializer());
-            lsc.RegisterSerializer(new ExchangeRateSerializer(
-                lsc.GetSerializer<DateTime>(),
-                lsc.GetSerializer<Currency>()));
-
-            // IList<int>
-            lsc.RegisterSerializer(new ListSerializer<int>(
-                lsc.GetSerializer<int>()));
-
-            // IDictionary<int, IList<DateTime>> 
-            lsc.RegisterSerializer(
-                new ListSerializer<DateTime>(
-                    lsc.GetSerializer<DateTime>()));
-            lsc.RegisterSerializer(
-                new DictionarySerializer<int, IList<DateTime>>(
-                    lsc.GetSerializer<int>(),
-                    lsc.GetSerializer<IList<DateTime>>()));
-
-            // IDictionary<DateTime, IList<ExchangeRate>>
-            lsc.RegisterSerializer(
-                new ListSerializer<ExchangeRate>(
-                    lsc.GetSerializer<ExchangeRate>()));
-            lsc.RegisterSerializer(
-                new DictionarySerializer<DateTime, IList<ExchangeRate>>(
-                    lsc.GetSerializer<DateTime>(),
-                    lsc.GetSerializer<IList<ExchangeRate>>()));
-
-            // IDictionary<DateTime, string>
-            lsc.RegisterSerializer<IDictionary<DateTime, string>> (
-                new DictionarySerializer<DateTime, string>(
-                    lsc.GetSerializer<DateTime>(),
-                    lsc.GetSerializer<string>()));
-
-            return lsc;
-        }
-
-
-        public void RegisterSerializer<T>(ISerializer<T> serializer)
-        {
-            _serializers.Add(typeof (T), serializer);
-        }
-
-        private ISerializer<T> GetSerializer<T>()
-        {
-            return (ISerializer<T>) _serializers[typeof (T)];
+            _serializers.GetSerializer<T>().Serialize(value, fileStream);
         }
 
         private T Deserialize<T>(Stream fileStream)
         {
             try
             {
-                var deserialized = GetSerializer<T>().Deserialize(fileStream);
+                var deserialized = _serializers.GetSerializer<T>().Deserialize(fileStream);
 
+                // ReSharper disable once InvertIf
                 if (fileStream.Position != fileStream.Length)
-                    throw new InvalidCastException("some data omitted");
+                {
+                    var exceptionMsg = string.Format(
+                        "some data omitted: stream.position[{0}] != stream.length[{1}]",
+                        fileStream.Position, fileStream.Length);
+                    throw new InvalidCastException(exceptionMsg);
+                }
 
                 return deserialized;
             }

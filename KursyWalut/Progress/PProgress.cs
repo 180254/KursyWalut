@@ -6,8 +6,6 @@ namespace KursyWalut.Progress
 {
     public class PProgress : IPProgress
     {
-        public readonly int MaxValue;
-
         private readonly PProgress _parent;
         private readonly IList<PProgress> _childs;
 
@@ -29,6 +27,7 @@ namespace KursyWalut.Progress
             _lastReported = 0;
         }
 
+        public int MaxValue { get; }
         public int CurrentValue => _currentValue.Get();
         public event EventHandler<int> ProgressChanged;
 
@@ -51,10 +50,6 @@ namespace KursyWalut.Progress
 
         public IPProgress SubPercent(double percentFrom, double percentTo)
         {
-            if (!(percentFrom >= 0 && percentFrom <= 100)) throw new ArgumentOutOfRangeException(nameof(percentFrom));
-            if (!(percentTo >= 0 && percentTo <= 100)) throw new ArgumentOutOfRangeException(nameof(percentTo));
-            if (percentFrom > percentTo) throw new ArgumentException(nameof(percentFrom) + " < " + nameof(percentTo));
-
             var child = new PProgress(ComputePercent(percentTo - percentFrom), this, _currentValue);
             _childs.Add(child);
             return child;
@@ -62,8 +57,6 @@ namespace KursyWalut.Progress
 
         public IPProgress SubPart(int partIndex, int partCount)
         {
-            if (partIndex >= partCount) throw new ArgumentException(nameof(partIndex) + " >= " + nameof(partCount));
-
             var percentPerPart = 1.0/partCount;
             return SubPercent(partIndex*percentPerPart, (partIndex + 1)*percentPerPart);
         }
@@ -80,14 +73,14 @@ namespace KursyWalut.Progress
             _parent?.NotifyChange(value);
         }
 
-        public static IPProgress NewMaster()
-        {
-            return new PProgress(10000);
-        }
-
         private int ComputePercent(double percent)
         {
             return (int) Math.Round(MaxValue*percent);
+        }
+
+        public static IPProgress NewMaster()
+        {
+            return new PProgress(100000);
         }
     }
 }
