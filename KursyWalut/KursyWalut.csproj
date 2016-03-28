@@ -104,12 +104,16 @@
     <Compile Include="Cache\InMemCache.cs" />
     <Compile Include="Cache\LocalStorageCache.cs" />
     <Compile Include="Helper\CacheHelper.cs" />
+    <Compile Include="Page\HistoryPage.xaml.cs">
+      <DependentUpon>HistoryPage.xaml</DependentUpon>
+    </Compile>
     <Compile Include="Serializer\SerializersStore.cs" />
-    <Compile Include="MainPage.xaml.cs">
+    <Compile Include="Page\MainPage.xaml.cs">
       <DependentUpon>MainPage.xaml</DependentUpon>
     </Compile>
     <Compile Include="Properties\Annotations.cs" />
     <Compile Include="Helper\ProviderHelper.cs" />
+    <Compile Include="ViewModel\HistoryViewModel.cs" />
     <Compile Include="ViewModel\MainViewModel.cs" />
     <Compile Include="Model\ExchangeRate.cs" />
     <Compile Include="Model\Currency.cs" />
@@ -154,9 +158,13 @@
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
     </ApplicationDefinition>
-    <Page Include="MainPage.xaml">
+    <Page Include="Page\MainPage.xaml">
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
+    </Page>
+    <Page Include="Page\HistoryPage.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
     </Page>
   </ItemGroup>
   <ItemGroup />
