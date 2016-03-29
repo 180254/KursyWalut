@@ -98,10 +98,11 @@ namespace KursyWalut.ProviderImpl
 
         public async Task<IList<ExchangeRate>> GetExchangeRates(DateTime day, IPProgress p)
         {
+            var response = "?";
             try
             {
                 var filename = _dayToFilename[day]; // possible KeyNotFoundException
-                var response =
+                response =
                     await _extractor.GetHttpResponse("http://www.nbp.pl/kursy/xml/" + filename + ".xml", _iso88592);
 
                 p.ReportProgress(0.60);
@@ -120,7 +121,7 @@ namespace KursyWalut.ProviderImpl
             }
             catch (Exception ex) when (!(ex is ArgumentException || ex is IOException))
             {
-                throw new IOException("response unavailable or in unexpected format(1)", ex);
+                throw new IOException("response unavailable or in unexpected format(1); response = " + response, ex);
             }
         }
     }

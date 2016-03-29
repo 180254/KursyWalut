@@ -14,6 +14,7 @@ namespace KursyWalut.ProviderImpl
     public class NbpExchangeRateExtractor : IDisposable
     {
         private readonly HttpClient _client = new HttpClient();
+        private readonly NumberFormatInfo _nfi = new NumberFormatInfo { CurrencyGroupSeparator = "", CurrencyDecimalSeparator = "," };
 
         public void Dispose()
         {
@@ -75,7 +76,7 @@ namespace KursyWalut.ProviderImpl
                 return new ExchangeRate(
                     day,
                     ParseCurrency(xC),
-                    double.Parse(xC.Element("kurs_sredni").Value.Replace(",", ".")));
+                    double.Parse(xC.Element("kurs_sredni").Value.Replace(',', '.'), CultureInfo.InvariantCulture));
             }
 
             catch (Exception ex)

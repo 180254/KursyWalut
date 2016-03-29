@@ -24,7 +24,7 @@
             </Grid.RowDefinitions>
 
             <StackPanel Grid.Row="0">
-                <TextBlock Text="Średnie kursy walut." Foreground="#D1B280"  />
+                <TextBlock x:Uid="MainHeader" Text="?" Foreground="#D1B280"  />
             </StackPanel>
 
             <ListView Grid.Row="1" Margin="0,5,0,0" SelectionMode="None" ItemsSource="{Binding ExchangeRates}">
