@@ -106,17 +106,17 @@
     <Compile Include="Cache\InMemCache.cs" />
     <Compile Include="Cache\LocalStorageCache.cs" />
     <Compile Include="Helper\CacheHelper.cs" />
-    <Compile Include="Page\HistoryPage.xaml.cs">
-      <DependentUpon>HistoryPage.xaml</DependentUpon>
+    <Compile Include="Page\History.xaml.cs">
+      <DependentUpon>History.xaml</DependentUpon>
     </Compile>
     <Compile Include="Serializer\SerializersStore.cs" />
-    <Compile Include="Page\MainPage.xaml.cs">
-      <DependentUpon>MainPage.xaml</DependentUpon>
+    <Compile Include="Page\Main.xaml.cs">
+      <DependentUpon>Main.xaml</DependentUpon>
     </Compile>
     <Compile Include="Properties\Annotations.cs" />
     <Compile Include="Helper\ProviderHelper.cs" />
-    <Compile Include="ViewModel\HistoryViewModel.cs" />
-    <Compile Include="ViewModel\MainViewModel.cs" />
+    <Compile Include="Page\HistoryVm.cs" />
+    <Compile Include="Page\MainVM.cs" />
     <Compile Include="Model\ExchangeRate.cs" />
     <Compile Include="Model\Currency.cs" />
     <Compile Include="Progress\IPProgress.cs" />
@@ -138,7 +138,7 @@
     <Compile Include="Serializer\ISerializer.cs" />
     <Compile Include="Serializer\LIstSerializer.cs" />
     <Compile Include="Serializer\StringSerializer.cs" />
-    <Compile Include="ViewModel\ViewModelLocator.cs" />
+    <Compile Include="Page\VmLocator.cs" />
   </ItemGroup>
   <ItemGroup>
     <AppxManifest Include="Package.appxmanifest">
@@ -160,11 +160,11 @@
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
     </ApplicationDefinition>
-    <Page Include="Page\MainPage.xaml">
+    <Page Include="Page\Main.xaml">
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
     </Page>
-    <Page Include="Page\HistoryPage.xaml">
+    <Page Include="Page\History.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>

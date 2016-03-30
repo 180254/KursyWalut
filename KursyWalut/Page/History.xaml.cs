@@ -1,23 +1,30 @@
 ﻿using System;
 using System.Diagnostics;
+using Windows.UI.Core;
+using Windows.UI.Xaml.Navigation;
 using GalaSoft.MvvmLight.Ioc;
 using KursyWalut.Helper;
-using KursyWalut.ViewModel;
+using KursyWalut.Model;
 
 namespace KursyWalut.Page
 {
     public sealed partial class HistoryPage : Windows.UI.Xaml.Controls.Page
     {
-        private readonly HistoryViewModel _historyViewModel;
+        private readonly HistoryVm _historyPageVm;
         private readonly EventHandler<int> _toProgressNotifier;
 
         public HistoryPage()
         {
             InitializeComponent();
-            _historyViewModel = SimpleIoc.Default.GetInstance<HistoryViewModel>();
-            _toProgressNotifier = (sender, i) => _historyViewModel.Progress = i;
-
+            _historyPageVm = SimpleIoc.Default.GetInstance<HistoryVm>();
+            _toProgressNotifier = (sender, i) => _historyPageVm.Progress = i;
+      
             Init();
+        }
+
+        protected override void OnNavigatedTo(NavigationEventArgs e)
+        {
+            _historyPageVm.Currency = (Currency)e.Parameter;
         }
 
         private async void Init()
@@ -26,9 +33,9 @@ namespace KursyWalut.Page
             var sw = Stopwatch.StartNew();
 #endif
 
-            using (var h = new ProviderHelper(_toProgressNotifier))
-            {
-            }
+//            using (var h = new ProviderHelper(_toProgressNotifier))
+//            {
+//            }
 
 #if DEBUG
             sw.Stop();

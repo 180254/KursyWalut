@@ -3,11 +3,11 @@
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:local="using:KursyWalut"
-    xmlns:viewModel="using:KursyWalut.ViewModel"
+    xmlns:page="using:KursyWalut.Page"
     RequestedTheme="Dark">
 
     <Application.Resources>
-        <viewModel:ViewModelLocator x:Key="Locator" />
+        <page:VmLocator x:Key="Locator" />
     </Application.Resources>
 
 </Application>

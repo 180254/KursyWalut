@@ -3,9 +3,9 @@ using System.Collections.Generic;
 using GalaSoft.MvvmLight;
 using KursyWalut.Model;
 
-namespace KursyWalut.ViewModel
+namespace KursyWalut.Page
 {
-    public class MainViewModel : ViewModelBase
+    public class MainVm : ViewModelBase
     {
         private IList<ExchangeRate> _exchangeRates;
         private IList<DateTime> _availDates;
