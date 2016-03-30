@@ -9,7 +9,6 @@ namespace KursyWalut.Cache
     public class LocalStorageCache : ICache
     {
         private readonly StorageFolder _localFolder = ApplicationData.Current.LocalFolder;
-
         private readonly ReaderWriterLockSlim _lock = new ReaderWriterLockSlim(LockRecursionPolicy.NoRecursion);
         private readonly TimeSpan _waitTime = TimeSpan.FromSeconds(1);
         private readonly SerializersStore _serializers;
@@ -30,7 +29,10 @@ namespace KursyWalut.Cache
                 file1.AsTask().Wait(_waitTime);
 
                 var file = file1.GetResults() as IStorageFile;
-                if (file == null) return default_.Invoke();
+                if (file == null)
+                {
+                    return default_.Invoke();
+                }
 
                 var fileStream1 = file.OpenStreamForReadAsync();
                 fileStream1.Wait(_waitTime);

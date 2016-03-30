@@ -18,14 +18,14 @@ namespace KursyWalut.ProviderImpl
         private readonly Encoding _utf8;
         private readonly Encoding _iso88592;
 
-        // -----------------------------------------------------------------------------------------
+        // ---------------------------------------------------------------------------------------------------------------
 
         private readonly NbpExchangeRateExtractor _extractor;
 
         private readonly ICache _cache;
         private readonly IDictionary<DateTime, string> _dayToFilename;
 
-        // -----------------------------------------------------------------------------------------
+        // ---------------------------------------------------------------------------------------------------------------
 
         public NbpExchangeRatesProvider(ICache cache, IPProgress p)
         {
@@ -47,7 +47,7 @@ namespace KursyWalut.ProviderImpl
             p.ReportProgress(1.00);
         }
 
-        // -----------------------------------------------------------------------------------------
+        // ---------------------------------------------------------------------------------------------------------------
 
         public async Task<IList<int>> GetAvailableYears(IPProgress p)
         {

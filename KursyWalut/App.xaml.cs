@@ -5,7 +5,6 @@ using Windows.ApplicationModel.Activation;
 using Windows.UI.Xaml;
 using Windows.UI.Xaml.Controls;
 using Windows.UI.Xaml.Navigation;
-using Bezysoftware.Navigation.BackButton;
 using KursyWalut.Page;
 using Microsoft.ApplicationInsights;
 
@@ -62,7 +61,6 @@ namespace KursyWalut
                 // Place the frame in the current Window
                 Window.Current.Content = rootFrame;
             }
-            BackButtonManager.RegisterFrame(rootFrame, true, true, true);
 
             if (rootFrame.Content == null)
             {

@@ -1,0 +1,93 @@
+﻿<Page
+    x:Class="KursyWalut.Page.MainPage"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:local="using:KursyWalut.Page"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    mc:Ignorable="d"
+
+    xmlns:converters="using:Cimbalino.Toolkit.Converters"
+    DataContext="{Binding Path=Vm, RelativeSource={RelativeSource Mode=Self}}">
+
+    <Page.Resources>
+        <converters:StringFormatConverter x:Key="StringFormatConverter" />
+    </Page.Resources>
+
+    <Grid Background="{ThemeResource ApplicationPageBackgroundThemeBrush}">
+        <Pivot Name="MainPivot">
+
+            <PivotItem>
+                <PivotItem.Header>
+                    <TextBlock Foreground="#D1B280">
+                        <Run x:Uid="AvgPivotHeader" Text="?" />
+                    </TextBlock>
+                </PivotItem.Header>
+
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="*" />
+                        <RowDefinition Height="40" />
+                        <RowDefinition Height="15" />
+                    </Grid.RowDefinitions>
+
+                    <ListView Grid.Row="0" Margin="0,5,0,0" SelectionMode="Single"
+                              ItemsSource="{Binding AvgExchangeRates}" IsEnabled="{Binding AvgListEnabled}"
+                              Tapped="AvgList_OnTapped">
+
+                        <ListView.ItemContainerStyle>
+                            <Style TargetType="ListViewItem">
+                                <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+                            </Style>
+                        </ListView.ItemContainerStyle>
+
+                        <ListView.ItemTemplate>
+                            <DataTemplate>
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="3*" />
+                                        <ColumnDefinition Width="7*" />
+                                    </Grid.ColumnDefinitions>
+
+                                    <TextBlock Grid.Column="0"
+                                               Text="{Binding Currency.Code}" />
+                                    <TextBlock Grid.Column="1"
+                                               Text="{Binding Path=AverageRate, Converter={StaticResource StringFormatConverter}, ConverterParameter='{}{0:0.000}'}" />
+                                </Grid>
+                            </DataTemplate>
+                        </ListView.ItemTemplate>
+                    </ListView>
+
+                    <CalendarDatePicker Grid.Row="1" Height="35" Margin="0,5,0,0" HorizontalAlignment="Stretch"
+                                        Date="{Binding Path=AvgDate, Mode=TwoWay}"
+                                        IsEnabled="{Binding CalendarEnabled}"
+                                        CalendarViewDayItemChanging="AvgDatePicker_OnCalendarViewDayItemChanging"
+                                        DateChanged="AvgDatePicker_OnDateChanged" />
+
+                    <ProgressBar Grid.Row="2" Height="15" Margin="0,5,0,0" Minimum="0" Maximum="100000"
+                                 Value="{Binding Progress}" />
+                </Grid>
+            </PivotItem>
+
+
+            <PivotItem>
+                <PivotItem.Header>
+                    <TextBlock Foreground="#D1B280">
+                        <Run x:Uid="HisPivotHeader" Text="?" /><Run Text=" " /><Run Text="{Binding Currency.Code}" />
+                    </TextBlock>
+                </PivotItem.Header>
+
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="20" />
+                        <RowDefinition Height="*" />
+                        <RowDefinition Height="15" />
+                    </Grid.RowDefinitions>
+
+                    <ProgressBar Grid.Row="2" Height="15" Margin="0,5,0,0" Minimum="0" Maximum="100000"
+                                 Value="{Binding Progress}" />
+                </Grid>
+            </PivotItem>
+        </Pivot>
+    </Grid>
+</Page>

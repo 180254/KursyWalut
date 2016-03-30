@@ -1,5 +1,4 @@
 ﻿using System;
-using GalaSoft.MvvmLight.Ioc;
 using KursyWalut.Cache;
 using KursyWalut.Progress;
 using KursyWalut.Provider;
@@ -11,18 +10,12 @@ namespace KursyWalut.Helper
     {
         private readonly IPProgress _pprogressM;
 
-        static ProviderHelper()
-        {
-            SimpleIoc.Default.Register(CacheHelper.GetStandard);
-        }
-
-        public ProviderHelper(EventHandler<int> progressSubscriber)
+        public ProviderHelper(ICache cache, EventHandler<int> progressSubscriber)
         {
             _pprogressM = PProgress.NewMaster();
             _pprogressM.ProgressChanged += progressSubscriber;
             _pprogressM.ReportProgress(0.00);
 
-            var cache = SimpleIoc.Default.GetInstance<ICache>();
             var nbpProvider = new NbpExchangeRatesProvider(cache, _pprogressM.SubPercent(0.00, 0.025));
             var cacheProvider = new CacheExchangeRateProvider(nbpProvider, cache, _pprogressM.SubPercent(0.025, 0.05));
 
