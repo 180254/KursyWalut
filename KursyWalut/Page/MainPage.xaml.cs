@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Diagnostics;
+using Windows.UI.Core;
 using Windows.UI.Xaml.Controls;
 using Windows.UI.Xaml.Input;
 using Windows.UI.Xaml.Navigation;
@@ -30,6 +31,8 @@ namespace KursyWalut.Page
 
             _historyPivotBackup = MainPivot.Items?[1];
             MainPivot.Items?.RemoveAt(1);
+
+            SystemNavigationManager.GetForCurrentView().BackRequested += OnBackRequested;
         }
 
         public MainPageVm Vm { get; }
@@ -129,6 +132,21 @@ namespace KursyWalut.Page
             Vm.Currency = selectedItem.Currency;
             MainPivot.SelectedIndex = 1;
             listView.SelectedValue = null;
+        }
+
+        // ---------------------------------------------------------------------------------------------------------------
+
+        private void OnBackRequested(object s, BackRequestedEventArgs e)
+        {
+            if (MainPivot.SelectedIndex > 0)
+            {
+                MainPivot.SelectedIndex = MainPivot.SelectedIndex - 1;
+                e.Handled = true;
+            }
+            else
+            {
+                e.Handled = false;
+            }
         }
     }
 }
