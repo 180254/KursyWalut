@@ -79,12 +79,39 @@
 
                 <Grid>
                     <Grid.RowDefinitions>
-                        <RowDefinition Height="20" />
                         <RowDefinition Height="*" />
+                        <RowDefinition Height="70" />
+                        <RowDefinition Height="32" />
                         <RowDefinition Height="15" />
                     </Grid.RowDefinitions>
 
-                    <ProgressBar Grid.Row="2" Height="15" Margin="0,5,0,0" Minimum="0" Maximum="100000"
+
+                    <Grid Grid.Row="1"  Margin="0,5,0,0">
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="*" />
+                            <RowDefinition Height="*" />
+                        </Grid.RowDefinitions>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto" />
+                            <ColumnDefinition Width="*" />
+                        </Grid.ColumnDefinitions>
+
+
+                        <TextBlock Text="Data początkowa" Grid.Row="0" Grid.Column="0"
+                                   HorizontalAlignment="Left" VerticalAlignment="Center" />
+                        <TextBlock Text="Data końcowa" Grid.Row="1" Grid.Column="0"
+                                   HorizontalAlignment="Left" VerticalAlignment="Center" />
+
+                        <CalendarDatePicker Grid.Row="0" Grid.Column="1" Margin="5,0,0,0" HorizontalAlignment="Stretch" />
+                        <CalendarDatePicker Grid.Row="1" Grid.Column="1" Margin="5,0,0,0" HorizontalAlignment="Stretch" />
+                    </Grid>
+
+
+                    <Button Grid.Row="2" Height="32" Margin="0,5,0,0" HorizontalAlignment="Stretch" Background="#906B30">
+                        <TextBlock Text="Rysuj historię" VerticalAlignment="Center" TextAlignment="Center"/>
+                    </Button>
+
+                    <ProgressBar Grid.Row="3" Height="15" Margin="0,5,0,0" Minimum="0" Maximum="100000"
                                  Value="{Binding Progress}" />
                 </Grid>
             </PivotItem>
