@@ -1,13 +1,13 @@
 ﻿using System;
 using System.Diagnostics;
 using Windows.UI.Core;
+using Windows.UI.Xaml;
 using Windows.UI.Xaml.Controls;
 using Windows.UI.Xaml.Input;
 using Windows.UI.Xaml.Navigation;
 using KursyWalut.Cache;
 using KursyWalut.Helper;
 using KursyWalut.Model;
-using WinRTXamlToolkit.Controls.DataVisualization.Charting;
 
 // The Blank Page item template is documented at http://go.microsoft.com/fwlink/?LinkId=402352&clcid=0x409
 
@@ -20,6 +20,7 @@ namespace KursyWalut.Page
     {
         private readonly ICache _cache;
         private readonly EventHandler<int> _toProgressNotifier;
+
         private object _historyPivotBackup;
 
         public MainPage()
@@ -52,26 +53,35 @@ namespace KursyWalut.Page
             var sw = Stopwatch.StartNew();
 #endif
             Vm.ChangesEnabled = false;
+
             using (var h = new ProviderHelper(_cache, _toProgressNotifier))
             {
-                var lastProgress = h.Progress.SubPercent(0.00, 0.10);
+                var firstProgress = h.Progress.SubPercent(0.00, 0.05);
+                var firstAvailableDay = await h.ErService.GetFirstAvailableDay(firstProgress);
+                Vm.HisDateFromMin = firstAvailableDay;
+
+                var lastProgress = h.Progress.SubPercent(0.05, 0.10);
                 var lastAvailableDay = await h.ErService.GetLastAvailableDay(lastProgress);
                 Vm.AvgDate = lastAvailableDay;
+                Vm.HisDateFrom = lastAvailableDay.AddYears(-1);
+                Vm.HisDateTo = lastAvailableDay;
+                Vm.HisDateToMax = lastAvailableDay;
+                Vm.HisDateBackup();
 
                 var erProgress = h.Progress.SubPercent(0.10, 0.50);
                 Vm.AvgEr = await h.ErService.GetExchangeRates(lastAvailableDay, erProgress);
 
                 var availProgress = h.Progress.SubPercent(0.50, 1.00);
                 Vm.AvailDates = await h.ErService.GetAllAvailablesDay(availProgress);
-
-                Vm.ChangesEnabled = true;
             }
 
+            Vm.ChangesEnabled = true;
+
 #if DEBUG
-            sw.Stop();
-            Debug.WriteLine("{0}-{1} time: {2}", nameof(MainPage), nameof(AvgInit), sw.Elapsed.ToString("mm':'ss':'fff"));
+            DebugElapsedTime(sw, nameof(AvgInit));
 #endif
         }
+
 
         // ---------------------------------------------------------------------------------------------------------------
 
@@ -81,14 +91,15 @@ namespace KursyWalut.Page
             var sw = Stopwatch.StartNew();
 #endif
             Vm.ChangesEnabled = false;
+
             using (var h = new ProviderHelper(_cache, _toProgressNotifier))
             {
                 Vm.AvgEr = await h.ErService.GetExchangeRates(date, h.Progress);
-                Vm.ChangesEnabled = true;
             }
+
+            Vm.ChangesEnabled = true;
 #if DEBUG
-            sw.Stop();
-            Debug.WriteLine("{0}-{1} time: {2}", nameof(MainPage), nameof(AvgReload), sw.Elapsed.ToString("mm':'ss':'fff"));
+            DebugElapsedTime(sw, nameof(AvgReload));
 #endif
         }
 
@@ -110,9 +121,10 @@ namespace KursyWalut.Page
             CalendarDatePicker sender,
             CalendarDatePickerDateChangedEventArgs e)
         {
-            if ((e.NewDate != null) && Vm.AvgCalendarEnabled)
+            if ((e.NewDate != null) && Vm.AvgActionEnabled)
             {
                 AvgReload(e.NewDate.Value.Date);
+                Vm.AvgDate = e.NewDate.Value.Date;
             }
         }
 
@@ -137,17 +149,77 @@ namespace KursyWalut.Page
 
         // ---------------------------------------------------------------------------------------------------------------
 
+        private void HisDraw_OnClick(object sender, RoutedEventArgs e)
+        {
+            HistoryDraw();
+        }
+
+        private async void HistoryDraw()
+        {
+#if DEBUG
+            var sw = Stopwatch.StartNew();
+#endif
+            Vm.ChangesEnabled = false;
+            Vm.HisDateBackup();
+
+            if ((Vm.HisDateFrom == null) || (Vm.HisDateTo == null))
+            {
+                return;
+                ;
+            }
+
+            using (var h = new ProviderHelper(_cache, _toProgressNotifier))
+            {
+                Vm.HisEr = await h.ErService.GetExchangeRateHistory(
+                    Vm.HisCurrency, Vm.HisDateFrom.Value.Date, Vm.HisDateTo.Value.Date, h.Progress);
+            }
+
+
+            Vm.ChangesEnabled = true;
+#if DEBUG
+            DebugElapsedTime(sw, nameof(HistoryDraw));
+#endif
+        }
+
+        private void HisDateFromPicker_OnDateChanged(
+            CalendarDatePicker sender,
+            CalendarDatePickerDateChangedEventArgs e)
+        {
+            if (e.NewDate != null)
+            {
+                Vm.HisDateFrom = e.NewDate.Value.Date;
+            }
+        }
+
+        private void HitDateToPicker_OnDateChanged(
+            CalendarDatePicker sender,
+            CalendarDatePickerDateChangedEventArgs e)
+        {
+            if (e.NewDate != null)
+            {
+                Vm.HisDateTo = e.NewDate.Value.Date;
+            }
+        }
+
+        // ---------------------------------------------------------------------------------------------------------------
+
         private void OnBackRequested(object s, BackRequestedEventArgs e)
         {
+            e.Handled = MainPivot.SelectedIndex > 0;
+
             if (MainPivot.SelectedIndex > 0)
             {
                 MainPivot.SelectedIndex = MainPivot.SelectedIndex - 1;
-                e.Handled = true;
+                Vm.HisDateRecover();
             }
-            else
-            {
-                e.Handled = false;
-            }
+        }
+
+        // ---------------------------------------------------------------------------------------------------------------
+
+        private static void DebugElapsedTime(Stopwatch sw, string methodName)
+        {
+            sw.Stop();
+            Debug.WriteLine("{0}-time: {1}", methodName, sw.Elapsed.ToString("mm':'ss':'fff"));
         }
     }
 }

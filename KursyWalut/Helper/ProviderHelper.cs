@@ -14,6 +14,9 @@ namespace KursyWalut.Helper
         {
             _pprogressM = PProgress.NewMaster();
             _pprogressM.ProgressChanged += progressSubscriber;
+#if DEBUG
+//            _pprogressM.ProgressChanged += (sender, i) => Debug.WriteLine("progress-{0}", i);
+#endif
             _pprogressM.ReportProgress(0.00);
 
             var nbpProvider = new NbpExchangeRatesProvider(cache, _pprogressM.SubPercent(0.00, 0.025));

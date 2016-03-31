@@ -80,7 +80,7 @@ namespace KursyWalut.Progress
 
         public static IPProgress NewMaster()
         {
-            return new PProgress(100000);
+            return new PProgress(10000);
         }
     }
 }

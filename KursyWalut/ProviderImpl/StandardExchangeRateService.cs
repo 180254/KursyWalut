@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Diagnostics;
 using System.Linq;
-using System.Threading;
 using System.Threading.Tasks;
 using KursyWalut.Cache;
 using KursyWalut.Model;
@@ -92,9 +91,9 @@ namespace KursyWalut.ProviderImpl
             if (endDay > await GetLastAvailableDay(p.SubPercent(0.05, 0.10)))
                 throw new ArgumentException("end.day > GetLastvailableDay()");
 
-            var availableDays = await GetDaysBetweenYears(startDay.Year, endDay.Year, p.SubPercent(0.10, 0.40));
+            var availableDays = await GetDaysBetweenYears(startDay.Year, endDay.Year, p.SubPercent(0.10, 0.20));
             var properDays = availableDays.Where(day => (day >= startDay) && (day <= endDay)).ToImmutableList();
-            var exchangeRates = await GetExchangeRatesInDays(properDays, currency, p.SubPercent(0.40, 1.00));
+            var exchangeRates = await GetExchangeRatesInDays(properDays, currency, p.SubPercent(0.20, 1.00));
 
             p.ReportProgress(1.00);
             return exchangeRates;
@@ -130,9 +129,18 @@ namespace KursyWalut.ProviderImpl
                 var progress = p.SubPart(i, days.Count);
                 work.Add(GetExchangeRate(currency, day, progress));
 
-                SpinWait.SpinUntil(() => work.Count(w => !w.IsCompleted) < waitFor);
-//                if (i%waitFor == 0) await Task.WhenAll(work);
-                if (i%(days.Count/10) == 0) Debug.WriteLine("DL-" + i);
+//                SpinWait.SpinUntil(() => work.Count(w => !w.IsCompleted) < waitFor);
+                if (i%waitFor == 0)
+                {
+                    await Task.WhenAll(work);
+//                    p.ReportProgress((i + 1.0)/days.Count);
+                }
+#if DEBUG
+                if (i%(days.Count/10) == 0)
+                {
+                    Debug.WriteLine("DL-{0}-{1}", days.Count, i);
+                }
+#endif
             }
 
             var workDone = await Task.WhenAll(work);

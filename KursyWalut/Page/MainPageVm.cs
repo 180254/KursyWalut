@@ -10,28 +10,23 @@ namespace KursyWalut.Page
         private DateTimeOffset? _avgDate;
         private IList<ExchangeRate> _avgEr;
         private IList<DateTime> _availDates;
-        private bool _avgListEnabled;
-        private bool _avgCalendarEnabled;
+        private bool _avgActionEnabled;
 
         // ---------------------------------------------------------------------------------------------------------------
 
         private Currency _hisCurrency;
+        private DateTimeOffset? _hisDateFrom;
+        private DateTimeOffset? _hisDateTo;
+        private readonly DateTimeOffset?[] _hisDateBackups = new DateTimeOffset?[2];
+        private DateTimeOffset _hisDateFromMin;
+        private DateTimeOffset _hisDateToMax;
         private IList<ExchangeRate> _hisEr;
+        private bool _hisActionEnabled;
+
 
         // ---------------------------------------------------------------------------------------------------------------
 
         private int _progress;
-
-        public MainPageVm()
-        {
-            HisEr = new List<ExchangeRate>();
-            var random = new Random();
-            for (var i = 0; i < 300; i++)
-            {
-                HisEr.Add(new ExchangeRate(DateTime.Now.AddDays(i), Currency.DummyForCode("USD"), random.Next(380, 450)/100.0));
-            }
-
-        }
 
         // ---------------------------------------------------------------------------------------------------------------
 
@@ -53,16 +48,10 @@ namespace KursyWalut.Page
             set { Set(() => AvailDates, ref _availDates, value); }
         }
 
-        public bool AvgListEnabled
+        public bool AvgActionEnabled
         {
-            get { return _avgListEnabled; }
-            set { Set(() => AvgListEnabled, ref _avgListEnabled, value); }
-        }
-
-        public bool AvgCalendarEnabled
-        {
-            get { return _avgCalendarEnabled; }
-            set { Set(() => AvgCalendarEnabled, ref _avgCalendarEnabled, value); }
+            get { return _avgActionEnabled; }
+            set { Set(() => AvgActionEnabled, ref _avgActionEnabled, value); }
         }
 
         // ---------------------------------------------------------------------------------------------------------------
@@ -74,10 +63,40 @@ namespace KursyWalut.Page
         }
 
 
+        public DateTimeOffset? HisDateFrom
+        {
+            get { return _hisDateFrom; }
+            set { Set(() => HisDateFrom, ref _hisDateFrom, value); }
+        }
+
+        public DateTimeOffset? HisDateTo
+        {
+            get { return _hisDateTo; }
+            set { Set(() => HisDateTo, ref _hisDateTo, value); }
+        }
+
+        public DateTimeOffset HisDateFromMin
+        {
+            get { return _hisDateFromMin; }
+            set { Set(() => HisDateFromMin, ref _hisDateFromMin, value); }
+        }
+
+        public DateTimeOffset HisDateToMax
+        {
+            get { return _hisDateToMax; }
+            set { Set(() => HisDateToMax, ref _hisDateToMax, value); }
+        }
+
         public IList<ExchangeRate> HisEr
         {
             get { return _hisEr; }
             set { Set(() => HisEr, ref _hisEr, value); }
+        }
+
+        public bool HisActionEnabled
+        {
+            get { return _hisActionEnabled; }
+            set { Set(() => HisActionEnabled, ref _hisActionEnabled, value); }
         }
 
         // ---------------------------------------------------------------------------------------------------------------
@@ -88,13 +107,25 @@ namespace KursyWalut.Page
             set { Set(() => Progress, ref _progress, value); }
         }
 
+
         public bool ChangesEnabled
         {
-            set
-            {
-                AvgListEnabled = value;
-                AvgCalendarEnabled = value;
-            }
+            set { AvgActionEnabled = HisActionEnabled = value; }
+        }
+
+
+        // ---------------------------------------------------------------------------------------------------------------
+
+        public void HisDateBackup()
+        {
+            _hisDateBackups[0] = HisDateFrom;
+            _hisDateBackups[1] = HisDateTo;
+        }
+
+        public void HisDateRecover()
+        {
+            HisDateFrom = _hisDateBackups[0];
+            HisDateTo = _hisDateBackups[1];
         }
     }
 }
