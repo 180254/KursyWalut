@@ -7,6 +7,8 @@
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     mc:Ignorable="d"
 
+    xmlns:c="using:WinRTXamlToolkit.Controls.DataVisualization"
+    xmlns:v="using:WinRTXamlToolkit.Controls.DataVisualization.Charting"
     xmlns:converters="using:Cimbalino.Toolkit.Converters"
     DataContext="{Binding Path=Vm, RelativeSource={RelativeSource Mode=Self}}">
 
@@ -32,7 +34,7 @@
                     </Grid.RowDefinitions>
 
                     <ListView Grid.Row="0" Margin="0,5,0,0" SelectionMode="Single"
-                              ItemsSource="{Binding AvgExchangeRates}" IsEnabled="{Binding AvgListEnabled}"
+                              ItemsSource="{Binding AvgEr}" IsEnabled="{Binding AvgListEnabled}"
                               Tapped="AvgList_OnTapped">
 
                         <ListView.ItemContainerStyle>
@@ -60,7 +62,7 @@
 
                     <CalendarDatePicker Grid.Row="1" Height="35" Margin="0,5,0,0" HorizontalAlignment="Stretch"
                                         Date="{Binding Path=AvgDate, Mode=TwoWay}"
-                                        IsEnabled="{Binding CalendarEnabled}"
+                                        IsEnabled="{Binding AvgCalendarEnabled}"
                                         CalendarViewDayItemChanging="AvgDatePicker_OnCalendarViewDayItemChanging"
                                         DateChanged="AvgDatePicker_OnDateChanged" />
 
@@ -73,7 +75,8 @@
             <PivotItem>
                 <PivotItem.Header>
                     <TextBlock Foreground="#D1B280">
-                        <Run x:Uid="HisPivotHeader" Text="?" /><Run Text=" " /><Run Text="{Binding Currency.Code}" />
+                        <Run x:Uid="HisPivotHeader" Text="?" /><Run Text=" " />
+                        <Run Text="{Binding HisCurrency.Code}" />
                     </TextBlock>
                 </PivotItem.Header>
 
@@ -85,8 +88,25 @@
                         <RowDefinition Height="15" />
                     </Grid.RowDefinitions>
 
+                    <v:Chart Grid.Row="0" Name="HisChart">
+                        <v:Chart.LegendStyle>
+                            <Style TargetType="c:Legend">
+                                <Setter Property="Width" Value="0" />
+                            </Style>
+                        </v:Chart.LegendStyle>
 
-                    <Grid Grid.Row="1"  Margin="0,5,0,0">
+                        <v:Chart.TitleStyle>
+                            <Style TargetType="c:Title">
+                                <Setter Property="Visibility" Value="Collapsed" />
+                            </Style>
+                        </v:Chart.TitleStyle>
+
+
+                        <v:LineSeries ItemsSource="{Binding HisEr}" IndependentValuePath="Day"
+                                      DependentValuePath="AverageRate" />
+                    </v:Chart>
+
+                    <Grid Grid.Row="1" Margin="0,5,0,0">
                         <Grid.RowDefinitions>
                             <RowDefinition Height="*" />
                             <RowDefinition Height="*" />
@@ -106,9 +126,9 @@
                         <CalendarDatePicker Grid.Row="1" Grid.Column="1" Margin="5,0,0,0" HorizontalAlignment="Stretch" />
                     </Grid>
 
-
-                    <Button Grid.Row="2" Height="32" Margin="0,5,0,0" HorizontalAlignment="Stretch" Background="#906B30">
-                        <TextBlock Text="Rysuj historię" VerticalAlignment="Center" TextAlignment="Center"/>
+                    <Button Grid.Row="2" Height="32" Margin="0,5,0,0" HorizontalAlignment="Stretch"
+                            Background="#674E23">
+                        <TextBlock Text="Rysuj historię" VerticalAlignment="Center" TextAlignment="Center" />
                     </Button>
 
                     <ProgressBar Grid.Row="3" Height="15" Margin="0,5,0,0" Minimum="0" Maximum="100000"

@@ -7,18 +7,44 @@ namespace KursyWalut.Page
 {
     public class MainPageVm : ViewModelBase
     {
-        private IList<ExchangeRate> _avgExchangeRates;
+        private DateTimeOffset? _avgDate;
+        private IList<ExchangeRate> _avgEr;
         private IList<DateTime> _availDates;
         private bool _avgListEnabled;
-        private bool _calendarEnabled;
-        private DateTimeOffset? _avgDate;
-        private Currency _currency;
+        private bool _avgCalendarEnabled;
+
+        // ---------------------------------------------------------------------------------------------------------------
+
+        private Currency _hisCurrency;
+        private IList<ExchangeRate> _hisEr;
+
+        // ---------------------------------------------------------------------------------------------------------------
+
         private int _progress;
 
-        public IList<ExchangeRate> AvgExchangeRates
+        public MainPageVm()
         {
-            get { return _avgExchangeRates; }
-            set { Set(() => AvgExchangeRates, ref _avgExchangeRates, value); }
+            HisEr = new List<ExchangeRate>();
+            var random = new Random();
+            for (var i = 0; i < 300; i++)
+            {
+                HisEr.Add(new ExchangeRate(DateTime.Now.AddDays(i), Currency.DummyForCode("USD"), random.Next(380, 450)/100.0));
+            }
+
+        }
+
+        // ---------------------------------------------------------------------------------------------------------------
+
+        public DateTimeOffset? AvgDate
+        {
+            get { return _avgDate; }
+            set { Set(() => AvgDate, ref _avgDate, value); }
+        }
+
+        public IList<ExchangeRate> AvgEr
+        {
+            get { return _avgEr; }
+            set { Set(() => AvgEr, ref _avgEr, value); }
         }
 
         public IList<DateTime> AvailDates
@@ -33,23 +59,28 @@ namespace KursyWalut.Page
             set { Set(() => AvgListEnabled, ref _avgListEnabled, value); }
         }
 
-        public bool CalendarEnabled
+        public bool AvgCalendarEnabled
         {
-            get { return _calendarEnabled; }
-            set { Set(() => CalendarEnabled, ref _calendarEnabled, value); }
+            get { return _avgCalendarEnabled; }
+            set { Set(() => AvgCalendarEnabled, ref _avgCalendarEnabled, value); }
         }
 
-        public DateTimeOffset? AvgDate
+        // ---------------------------------------------------------------------------------------------------------------
+
+        public Currency HisCurrency
         {
-            get { return _avgDate; }
-            set { Set(() => AvgDate, ref _avgDate, value); }
+            get { return _hisCurrency; }
+            set { Set(() => HisCurrency, ref _hisCurrency, value); }
         }
 
-        public Currency Currency
+
+        public IList<ExchangeRate> HisEr
         {
-            get { return _currency; }
-            set { Set(() => Currency, ref _currency, value); }
+            get { return _hisEr; }
+            set { Set(() => HisEr, ref _hisEr, value); }
         }
+
+        // ---------------------------------------------------------------------------------------------------------------
 
         public int Progress
         {
@@ -62,7 +93,7 @@ namespace KursyWalut.Page
             set
             {
                 AvgListEnabled = value;
-                CalendarEnabled = value;
+                AvgCalendarEnabled = value;
             }
         }
     }

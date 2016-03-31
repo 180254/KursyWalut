@@ -7,6 +7,7 @@ using Windows.UI.Xaml.Navigation;
 using KursyWalut.Cache;
 using KursyWalut.Helper;
 using KursyWalut.Model;
+using WinRTXamlToolkit.Controls.DataVisualization.Charting;
 
 // The Blank Page item template is documented at http://go.microsoft.com/fwlink/?LinkId=402352&clcid=0x409
 
@@ -58,7 +59,7 @@ namespace KursyWalut.Page
                 Vm.AvgDate = lastAvailableDay;
 
                 var erProgress = h.Progress.SubPercent(0.10, 0.50);
-                Vm.AvgExchangeRates = await h.ErService.GetExchangeRates(lastAvailableDay, erProgress);
+                Vm.AvgEr = await h.ErService.GetExchangeRates(lastAvailableDay, erProgress);
 
                 var availProgress = h.Progress.SubPercent(0.50, 1.00);
                 Vm.AvailDates = await h.ErService.GetAllAvailablesDay(availProgress);
@@ -82,7 +83,7 @@ namespace KursyWalut.Page
             Vm.ChangesEnabled = false;
             using (var h = new ProviderHelper(_cache, _toProgressNotifier))
             {
-                Vm.AvgExchangeRates = await h.ErService.GetExchangeRates(date, h.Progress);
+                Vm.AvgEr = await h.ErService.GetExchangeRates(date, h.Progress);
                 Vm.ChangesEnabled = true;
             }
 #if DEBUG
@@ -109,7 +110,7 @@ namespace KursyWalut.Page
             CalendarDatePicker sender,
             CalendarDatePickerDateChangedEventArgs e)
         {
-            if ((e.NewDate != null) && Vm.CalendarEnabled)
+            if ((e.NewDate != null) && Vm.AvgCalendarEnabled)
             {
                 AvgReload(e.NewDate.Value.Date);
             }
@@ -129,7 +130,7 @@ namespace KursyWalut.Page
                 _historyPivotBackup = null;
             }
 
-            Vm.Currency = selectedItem.Currency;
+            Vm.HisCurrency = selectedItem.Currency;
             MainPivot.SelectedIndex = 1;
             listView.SelectedValue = null;
         }
