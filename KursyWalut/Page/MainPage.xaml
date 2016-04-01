@@ -65,7 +65,7 @@
                                         CalendarViewDayItemChanging="AvgDatePicker_OnCalendarViewDayItemChanging"
                                         DateChanged="AvgDatePicker_OnDateChanged" />
 
-                    <ProgressBar Grid.Row="2" Height="15" Margin="0,5,0,0" Minimum="0" Maximum="10000"
+                    <ProgressBar Name="ProgressOne" Grid.Row="2" Height="15" Margin="0,5,0,0" Minimum="0" Maximum="10000"
                                  Value="{Binding Progress}" />
                 </Grid>
             </PivotItem>
@@ -87,7 +87,7 @@
                         <RowDefinition Height="15" />
                     </Grid.RowDefinitions>
 
-                    <c:Chart Grid.Row="0" Name="HisChart">
+                    <c:Chart Grid.Row="0">
                         <c:Chart.LegendStyle>
                             <Style TargetType="v:Legend">
                                 <Setter Property="Width" Value="0" />
@@ -158,7 +158,7 @@
                         <TextBlock x:Uid="DrawHistory" Text="?" VerticalAlignment="Center" TextAlignment="Center" />
                     </Button>
 
-                    <ProgressBar Grid.Row="3" Height="15" Margin="0,5,0,0" Minimum="0" Maximum="10000"
+                    <ProgressBar Name="ProgressTwo" Grid.Row="3" Height="15" Margin="0,5,0,0" Minimum="0" Maximum="10000"
                                  Value="{Binding Progress}" />
                 </Grid>
             </PivotItem>

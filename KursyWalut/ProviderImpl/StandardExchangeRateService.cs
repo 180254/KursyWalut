@@ -23,6 +23,10 @@ namespace KursyWalut.ProviderImpl
 
         public async Task InitCache(IPProgress p)
         {
+            var initCache = (_exchangeRatesProvider as ICacheable)?.InitCache(p);
+            if (initCache != null)
+                await initCache;
+
             p.ReportProgress(1.00);
         }
 

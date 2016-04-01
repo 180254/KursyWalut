@@ -1,17 +1,13 @@
 ﻿using System;
 using System.Collections.ObjectModel;
 using System.Diagnostics;
-using System.Threading.Tasks;
 using Windows.UI.Core;
 using Windows.UI.Xaml;
 using Windows.UI.Xaml.Controls;
 using Windows.UI.Xaml.Input;
 using Windows.UI.Xaml.Navigation;
-using KursyWalut.Cache;
 using KursyWalut.Helper;
 using KursyWalut.Model;
-using WinRTXamlToolkit.AwaitableUI;
-using WinRTXamlToolkit.Controls.DataVisualization.Charting;
 
 // The Blank Page item template is documented at http://go.microsoft.com/fwlink/?LinkId=402352&clcid=0x409
 
@@ -20,11 +16,9 @@ namespace KursyWalut.Page
     /// <summary>
     ///     An empty page that can be used on its own or navigated to within a Frame.
     /// </summary>
-    public sealed partial class MainPage : Windows.UI.Xaml.Controls.Page
+    public sealed partial class MainPage
     {
-        private readonly ICache _cache;
-        private readonly EventHandler<int> _toProgressNotifier;
-
+        private readonly ProviderHelper _providerHelper;
         private object _historyPivotBackup;
 
         public MainPage()
@@ -32,9 +26,10 @@ namespace KursyWalut.Page
             Vm = new MainPageVm();
             InitializeComponent();
 
-            _cache = CacheHelper.GetStandard();
-            _toProgressNotifier = (sender, i) => Vm.Progress = i;
+            var cache = CacheHelper.GetStandardLsc();
+            _providerHelper = new ProviderHelper(cache, (sender, i) => Vm.Progress = i);
 
+            // remove "history" pivot
             _historyPivotBackup = MainPivot.Items?[1];
             MainPivot.Items?.RemoveAt(1);
 
@@ -58,9 +53,10 @@ namespace KursyWalut.Page
 #endif
             Vm.ChangesEnabled = false;
 
-            using (var h = new ProviderHelper(_cache, _toProgressNotifier))
+            using (var h = _providerHelper.Helper())
             {
-                await h.Init();
+                await h.InitCache();
+
                 var firstProgress = h.Progress.SubPercent(0.00, 0.05);
                 var firstAvailableDay = await h.ErService.GetFirstAvailableDay(firstProgress);
                 Vm.HisDateFromMin = firstAvailableDay;
@@ -78,6 +74,8 @@ namespace KursyWalut.Page
 
                 var availProgress = h.Progress.SubPercent(0.50, 1.00);
                 Vm.AvailDates = await h.ErService.GetAllAvailablesDay(availProgress);
+
+                await h.FlushCache();
             }
 
             Vm.ChangesEnabled = true;
@@ -97,10 +95,11 @@ namespace KursyWalut.Page
 #endif
             Vm.ChangesEnabled = false;
 
-            using (var h = new ProviderHelper(_cache, _toProgressNotifier))
+            using (var h = _providerHelper.Helper())
             {
-                await h.Init();
+                await h.InitCache();
                 Vm.AvgEr = await h.ErService.GetExchangeRates(date, h.Progress);
+                await h.FlushCache();
             }
 
             Vm.ChangesEnabled = true;
@@ -127,6 +126,7 @@ namespace KursyWalut.Page
             CalendarDatePicker sender,
             CalendarDatePickerDateChangedEventArgs e)
         {
+            // ReSharper disable once InvertIf
             if ((e.NewDate != null) && Vm.AvgActionEnabled)
             {
                 AvgReload(e.NewDate.Value.Date);
@@ -173,16 +173,17 @@ namespace KursyWalut.Page
                 return;
             }
 
-            using (var h = new ProviderHelper(_cache, _toProgressNotifier))
+            using (var h = _providerHelper.Helper())
             {
-                await h.Init();
+                await h.InitCache();
+
                 var ers = new ObservableCollection<ExchangeRate>();
                 await h.ErService.GetExchangeRateHistory(
                     Vm.HisCurrency, Vm.HisDateFrom.Value.Date, Vm.HisDateTo.Value.Date,
                     ers, h.Progress);
                 Vm.HisEr = ers;
-//                await ((HisChart.Series[0]) as LineSeries).WaitForLayoutUpdateAsync();
-//                await Task.Run(() => Vm.HisEr = ers);
+
+                await h.FlushCache();
             }
 
 
@@ -218,6 +219,7 @@ namespace KursyWalut.Page
         {
             e.Handled = MainPivot.SelectedIndex > 0;
 
+            // ReSharper disable once InvertIf
             if (MainPivot.SelectedIndex > 0)
             {
                 MainPivot.SelectedIndex = MainPivot.SelectedIndex - 1;

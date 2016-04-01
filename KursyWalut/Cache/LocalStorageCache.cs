@@ -13,7 +13,6 @@ namespace KursyWalut.Cache
     {
         private readonly StorageFolder _localFolder = ApplicationData.Current.LocalFolder;
         private readonly ReaderWriterLockSlim _lock = new ReaderWriterLockSlim(LockRecursionPolicy.NoRecursion);
-        private readonly TimeSpan _waitTime = TimeSpan.FromSeconds(1);
         private readonly SerializersStore _serializers;
 
         /// Warning: register serializer for all types, which will be cached!
@@ -32,7 +31,7 @@ namespace KursyWalut.Cache
                 if (file == null) return default_.Invoke();
 
 #if DEBUG
-                Debug.WriteLine("Cache-{0}-{1}", key, await file.GetSizeAsync());
+                Debug.WriteLine("Cache-{0}-{1}-{2}", nameof(Get), key, await file.GetSizeAsync());
 #endif
 
                 using (var fileStream = await file.OpenStreamForReadAsync())
@@ -58,6 +57,10 @@ namespace KursyWalut.Cache
                 {
                     Serialize(value, fileStream);
                 }
+
+#if DEBUG
+                Debug.WriteLine("Cache-{0}-{1}-{2}", nameof(Store), key, await file.GetSizeAsync());
+#endif
             }
             finally
             {
@@ -65,12 +68,12 @@ namespace KursyWalut.Cache
             }
         }
 
-        public async Task<bool> Remove(string key)
+        public Task<bool> Remove(string key)
         {
             throw new NotImplementedException();
         }
 
-        public async Task Clear()
+        public Task Clear()
         {
             throw new NotImplementedException();
         }

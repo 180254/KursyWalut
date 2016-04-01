@@ -27,30 +27,38 @@ namespace KursyWalut.ProviderImpl
         {
             _availYears = await _cache.Get<IList<int>>(
                 nameof(_availYears), () => null);
-            p.ReportProgress(0.20);
+            p.ReportProgress(0.10);
 
             _yearToDays = await _cache.Get<IDictionary<int, IList<DateTime>>>(
                 nameof(_yearToDays), () => new Dictionary<int, IList<DateTime>>());
-            p.ReportProgress(0.40);
+            p.ReportProgress(0.20);
 
             _dayToEr = await _cache.Get<IDictionary<DateTime, IList<ExchangeRate>>>(
                 nameof(_dayToEr), () => new Dictionary<DateTime, IList<ExchangeRate>>());
+            p.ReportProgress(0.50);
+
+            var initCache = (_exchangeRatesProvider as ICacheable)?.InitCache(p.SubPercent(0.50, 1.00));
+            if (initCache != null)
+                await initCache;
+
             p.ReportProgress(1.00);
         }
 
         public async Task FlushCache(IPProgress p)
         {
-            var flushCache = (_exchangeRatesProvider as ICacheable)?.FlushCache(p.SubPercent(0.00, 0.20));
+            await _cache.Store(nameof(_availYears), _availYears);
+            p.ReportProgress(0.10);
+
+            await _cache.Store(nameof(_yearToDays), _yearToDays);
+            p.ReportProgress(0.20);
+
+            await _cache.Store(nameof(_dayToEr), _dayToEr);
+            p.ReportProgress(0.50);
+
+            var flushCache = (_exchangeRatesProvider as ICacheable)?.FlushCache(p.SubPercent(0.50, 1.00));
             if (flushCache != null)
                 await flushCache;
 
-            await _cache.Store(nameof(_availYears), _availYears);
-            p.ReportProgress(0.40);
-
-            await _cache.Store(nameof(_yearToDays), _yearToDays);
-            p.ReportProgress(0.80);
-
-            await _cache.Store(nameof(_dayToEr), _dayToEr);
             p.ReportProgress(1.00);
         }
 

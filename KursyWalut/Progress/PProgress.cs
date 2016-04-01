@@ -28,7 +28,7 @@ namespace KursyWalut.Progress
 
             var computePercent = ComputePercent(percent);
             var incrValue = computePercent - _lastReported.Get();
-            if (incrValue <= 0) return;
+            if (incrValue <= 0) incrValue = 0;
 
             IncrementProgress(incrValue);
         }
