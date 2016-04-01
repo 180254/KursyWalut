@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Threading.Tasks;
 
 namespace KursyWalut.Cache
 {
@@ -7,15 +8,15 @@ namespace KursyWalut.Cache
         /// Info: default_ will be not stored, if computed.
         /// <exception cref="T:System.InvalidCastException">Value for <paramref name="key" /> is not of type T.</exception>
         /// <exception cref="T:System.IO.IOException">Something go wrong with I/O.</exception>
-        T Get<T>(string key, Func<T> default_);
+        Task<T> Get<T>(string key, Func<T> default_);
 
         /// <exception cref="T:System.IO.IOException">Something go wrong with I/O.</exception>
-        void Store<T>(string key, T value);
+        Task Store<T>(string key, T value);
 
         /// <exception cref="T:System.IO.IOException">Something go wrong with I/O.</exception>
-        bool Remove(string key);
+        Task<bool> Remove(string key);
 
         /// <exception cref="T:System.IO.IOException">Something go wrong with I/O.</exception>
-        void Clear();
+        Task Clear();
     }
 }

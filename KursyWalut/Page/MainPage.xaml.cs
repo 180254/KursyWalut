@@ -1,5 +1,7 @@
 ﻿using System;
+using System.Collections.ObjectModel;
 using System.Diagnostics;
+using System.Threading.Tasks;
 using Windows.UI.Core;
 using Windows.UI.Xaml;
 using Windows.UI.Xaml.Controls;
@@ -8,6 +10,8 @@ using Windows.UI.Xaml.Navigation;
 using KursyWalut.Cache;
 using KursyWalut.Helper;
 using KursyWalut.Model;
+using WinRTXamlToolkit.AwaitableUI;
+using WinRTXamlToolkit.Controls.DataVisualization.Charting;
 
 // The Blank Page item template is documented at http://go.microsoft.com/fwlink/?LinkId=402352&clcid=0x409
 
@@ -56,6 +60,7 @@ namespace KursyWalut.Page
 
             using (var h = new ProviderHelper(_cache, _toProgressNotifier))
             {
+                await h.Init();
                 var firstProgress = h.Progress.SubPercent(0.00, 0.05);
                 var firstAvailableDay = await h.ErService.GetFirstAvailableDay(firstProgress);
                 Vm.HisDateFromMin = firstAvailableDay;
@@ -94,6 +99,7 @@ namespace KursyWalut.Page
 
             using (var h = new ProviderHelper(_cache, _toProgressNotifier))
             {
+                await h.Init();
                 Vm.AvgEr = await h.ErService.GetExchangeRates(date, h.Progress);
             }
 
@@ -165,13 +171,18 @@ namespace KursyWalut.Page
             if ((Vm.HisDateFrom == null) || (Vm.HisDateTo == null))
             {
                 return;
-                ;
             }
 
             using (var h = new ProviderHelper(_cache, _toProgressNotifier))
             {
-                Vm.HisEr = await h.ErService.GetExchangeRateHistory(
-                    Vm.HisCurrency, Vm.HisDateFrom.Value.Date, Vm.HisDateTo.Value.Date, h.Progress);
+                await h.Init();
+                var ers = new ObservableCollection<ExchangeRate>();
+                await h.ErService.GetExchangeRateHistory(
+                    Vm.HisCurrency, Vm.HisDateFrom.Value.Date, Vm.HisDateTo.Value.Date,
+                    ers, h.Progress);
+                Vm.HisEr = ers;
+//                await ((HisChart.Series[0]) as LineSeries).WaitForLayoutUpdateAsync();
+//                await Task.Run(() => Vm.HisEr = ers);
             }
 
 

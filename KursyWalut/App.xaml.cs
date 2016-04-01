@@ -1,11 +1,17 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using Windows.ApplicationModel;
 using Windows.ApplicationModel.Activation;
 using Windows.UI.Xaml;
 using Windows.UI.Xaml.Controls;
 using Windows.UI.Xaml.Navigation;
+using KursyWalut.Cache;
+using KursyWalut.Helper;
+using KursyWalut.Model;
 using KursyWalut.Page;
+using KursyWalut.Progress;
+using KursyWalut.ProviderImpl;
 using Microsoft.ApplicationInsights;
 
 namespace KursyWalut
@@ -26,6 +32,27 @@ namespace KursyWalut
                 WindowsCollectors.Session);
             InitializeComponent();
             Suspending += OnSuspending;
+
+//            var progress = PProgress.NewMaster();
+//            var cache = CacheHelper.GetStandard();
+//
+//            var nbpProvider = new NbpExchangeRatesProvider(cache, progress);
+//            var cacheProvider = new CacheExchangeRateProvider(nbpProvider, cache, progress);
+//            var erService = new StandardExchangeRateService(cacheProvider);
+//
+//            var ints = new List<int>();
+//            var progress1 = PProgress.NewMaster();
+//            progress1.ProgressChanged += (sender, i) => ints.Add(i);
+//
+//            var er = erService.GetExchangeRateHistory(Currency.DummyForCode("USD"), DateTime.Now.AddYears(-1), DateTime.Now.AddDays(-1), progress1);
+//            er.Wait();
+//
+//            Debug.Write("Progress-");
+//            foreach (var i in ints)
+//            {
+//                Debug.Write(i+",");
+//            }
+
         }
 
         /// <summary>

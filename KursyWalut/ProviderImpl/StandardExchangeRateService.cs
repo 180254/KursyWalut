@@ -4,6 +4,7 @@ using System.Collections.Immutable;
 using System.Diagnostics;
 using System.Linq;
 using System.Threading.Tasks;
+using Cimbalino.Toolkit.Extensions;
 using KursyWalut.Cache;
 using KursyWalut.Model;
 using KursyWalut.Progress;
@@ -20,9 +21,18 @@ namespace KursyWalut.ProviderImpl
             _exchangeRatesProvider = exchangeRatesProvider;
         }
 
-        public void FlushCache(IPProgress p)
+        public async Task InitCache(IPProgress p)
         {
-            (_exchangeRatesProvider as ICacheable)?.FlushCache(p);
+            p.ReportProgress(1.00);
+        }
+
+
+        public async Task FlushCache(IPProgress p)
+        {
+            var flushCache = (_exchangeRatesProvider as ICacheable)?.FlushCache(p);
+            if (flushCache != null)
+                await flushCache;
+
             p.ReportProgress(1.00);
         }
 
@@ -81,8 +91,9 @@ namespace KursyWalut.ProviderImpl
             return availableDays;
         }
 
-        public async Task<IList<ExchangeRate>> GetExchangeRateHistory(
-            Currency currency, DateTime startDay, DateTime endDay, IPProgress p)
+        public async Task GetExchangeRateHistory(
+            Currency currency, DateTime startDay, DateTime endDay,
+            ICollection<ExchangeRate> ers, IPProgress p)
         {
             if (startDay > endDay)
                 throw new ArgumentException("start.day > stop.day");
@@ -93,10 +104,9 @@ namespace KursyWalut.ProviderImpl
 
             var availableDays = await GetDaysBetweenYears(startDay.Year, endDay.Year, p.SubPercent(0.10, 0.20));
             var properDays = availableDays.Where(day => (day >= startDay) && (day <= endDay)).ToImmutableList();
-            var exchangeRates = await GetExchangeRatesInDays(properDays, currency, p.SubPercent(0.20, 1.00));
+            await GetExchangeRatesInDays(properDays, currency, ers, p.SubPercent(0.20, 1.00));
 
             p.ReportProgress(1.00);
-            return exchangeRates;
         }
 
         private async Task<IList<DateTime>> GetDaysBetweenYears(int startYear, int endYear, IPProgress p)
@@ -117,8 +127,9 @@ namespace KursyWalut.ProviderImpl
             return workDone.SelectMany(x => x).ToImmutableList();
         }
 
-        private async Task<IList<ExchangeRate>> GetExchangeRatesInDays(
-            IList<DateTime> days, Currency currency, IPProgress p)
+        private async Task GetExchangeRatesInDays(
+            IList<DateTime> days, Currency currency,
+            ICollection<ExchangeRate> ers, IPProgress p)
         {
             var work = new List<Task<ExchangeRate>>();
             var waitFor = Environment.ProcessorCount*10;
@@ -130,20 +141,18 @@ namespace KursyWalut.ProviderImpl
                 work.Add(GetExchangeRate(currency, day, progress));
 
 //                SpinWait.SpinUntil(() => work.Count(w => !w.IsCompleted) < waitFor);
-                if (i%waitFor == 0)
+                if ((i%waitFor == 0) || (i == days.Count - 1))
                 {
-                    await Task.WhenAll(work);
+                    var exchangeRates = await Task.WhenAll(work);
+                    ers.AddRange(exchangeRates);
+
+                    work.Clear();
                     p.ReportProgress((i + 1.0)/days.Count);
                 }
 #if DEBUG
                 if (i%(days.Count/10) == 0) Debug.WriteLine("DL-{0}-{1}", days.Count, i);
 #endif
             }
-
-            var workDone = await Task.WhenAll(work);
-
-            p.ReportProgress(1.00);
-            return workDone.ToImmutableList();
         }
     }
 }

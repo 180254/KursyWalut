@@ -1,8 +1,11 @@
 ﻿using System;
+using System.Diagnostics;
 using System.IO;
 using System.Threading;
+using System.Threading.Tasks;
 using Windows.Storage;
 using KursyWalut.Serializer;
+using WinRTXamlToolkit.IO.Extensions;
 
 namespace KursyWalut.Cache
 {
@@ -19,25 +22,20 @@ namespace KursyWalut.Cache
             _serializers = serializers;
         }
 
-        public T Get<T>(string key, Func<T> default_)
+        public async Task<T> Get<T>(string key, Func<T> default_)
         {
             _lock.EnterReadLock();
 
             try
             {
-                var file1 = _localFolder.TryGetItemAsync(key);
-                file1.AsTask().Wait(_waitTime);
+                var file = await _localFolder.TryGetItemAsync(key) as IStorageFile;
+                if (file == null) return default_.Invoke();
 
-                var file = file1.GetResults() as IStorageFile;
-                if (file == null)
-                {
-                    return default_.Invoke();
-                }
+#if DEBUG
+                Debug.WriteLine("Cache-{0}-{1}", key, await file.GetSizeAsync());
+#endif
 
-                var fileStream1 = file.OpenStreamForReadAsync();
-                fileStream1.Wait(_waitTime);
-
-                using (var fileStream = fileStream1.Result)
+                using (var fileStream = await file.OpenStreamForReadAsync())
                 {
                     return Deserialize<T>(fileStream);
                 }
@@ -48,21 +46,15 @@ namespace KursyWalut.Cache
             }
         }
 
-        public void Store<T>(string key, T value)
+        public async Task Store<T>(string key, T value)
         {
             _lock.EnterWriteLock();
 
             try
             {
-                var file1 = _localFolder.CreateFileAsync(key, CreationCollisionOption.ReplaceExisting);
-                file1.AsTask().Wait(_waitTime);
+                var file = await _localFolder.CreateFileAsync(key, CreationCollisionOption.ReplaceExisting);
 
-                var file = file1.GetResults();
-
-                var fileStream1 = file.OpenStreamForWriteAsync();
-                fileStream1.Wait(_waitTime);
-
-                using (var fileStream = fileStream1.Result)
+                using (var fileStream = await file.OpenStreamForWriteAsync())
                 {
                     Serialize(value, fileStream);
                 }
@@ -73,12 +65,12 @@ namespace KursyWalut.Cache
             }
         }
 
-        public bool Remove(string key)
+        public async Task<bool> Remove(string key)
         {
             throw new NotImplementedException();
         }
 
-        public void Clear()
+        public async Task Clear()
         {
             throw new NotImplementedException();
         }

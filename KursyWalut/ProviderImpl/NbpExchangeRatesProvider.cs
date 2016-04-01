@@ -23,27 +23,30 @@ namespace KursyWalut.ProviderImpl
         private readonly NbpExchangeRateExtractor _extractor;
 
         private readonly ICache _cache;
-        private readonly IDictionary<DateTime, string> _dayToFilename;
+        private IDictionary<DateTime, string> _dayToFilename;
 
         // ---------------------------------------------------------------------------------------------------------------
 
-        public NbpExchangeRatesProvider(ICache cache, IPProgress p)
+        public NbpExchangeRatesProvider(ICache cache)
         {
             Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
             _utf8 = new UTF8Encoding(false);
             _iso88592 = Encoding.GetEncoding("ISO-8859-2");
 
             _extractor = new NbpExchangeRateExtractor();
-
             _cache = cache;
-            _dayToFilename = cache.Get<IDictionary<DateTime, string>>(
+        }
+
+        public async Task InitCache(IPProgress p)
+        {
+            _dayToFilename = await _cache.Get<IDictionary<DateTime, string>>(
                 nameof(_dayToFilename), () => new Dictionary<DateTime, string>());
             p.ReportProgress(1.00);
         }
 
-        public void FlushCache(IPProgress p)
+        public async Task FlushCache(IPProgress p)
         {
-            _cache.Store(nameof(_dayToFilename), _dayToFilename);
+            await _cache.Store(nameof(_dayToFilename), _dayToFilename);
             p.ReportProgress(1.00);
         }
 

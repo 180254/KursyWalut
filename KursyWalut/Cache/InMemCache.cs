@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Concurrent;
+using System.Threading.Tasks;
 
 namespace KursyWalut.Cache
 {
@@ -7,7 +8,7 @@ namespace KursyWalut.Cache
     {
         private readonly ConcurrentDictionary<string, object> _dict = new ConcurrentDictionary<string, object>();
 
-        public T Get<T>(string key, Func<T> default_)
+        public async Task<T> Get<T>(string key, Func<T> default_)
         {
             object value;
             if (_dict.TryGetValue(key, out value))
@@ -15,23 +16,23 @@ namespace KursyWalut.Cache
                 return (T) value;
             }
 
-            return default_.Invoke();
+            return await Task.Run(() => default_.Invoke());
         }
 
-        public void Store<T>(string key, T value)
+        public async Task Store<T>(string key, T value)
         {
-            _dict.AddOrUpdate(key, value, (oldkey, oldvalue) => value);
+            await Task.Run(() => _dict.AddOrUpdate(key, value, (oldkey, oldvalue) => value));
         }
 
-        public bool Remove(string key)
+        public async Task<bool> Remove(string key)
         {
             object ignored;
-            return _dict.TryRemove(key, out ignored);
+            return await Task.Run(() => _dict.TryRemove(key, out ignored));
         }
 
-        public void Clear()
+        public async Task Clear()
         {
-            _dict.Clear();
+            await Task.Run(() => _dict.Clear());
         }
     }
 }
