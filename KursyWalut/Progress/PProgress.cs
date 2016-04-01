@@ -1,34 +1,25 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
 
 namespace KursyWalut.Progress
 {
     public class PProgress : IPProgress
     {
-        private readonly PProgress _parent;
-        private readonly IList<PProgress> _childs;
-
-        private readonly Integer _currentValue;
         private readonly Integer _lastReported;
+        private readonly PProgress _parent;
 
-        public PProgress(int maxValue) : this(maxValue, null, 0)
+        public PProgress(int maxValue) : this(maxValue, null)
         {
         }
 
-        private PProgress(int maxValue, PProgress parent, Integer currentValue)
+        private PProgress(int maxValue, PProgress parent)
         {
             MaxValue = maxValue;
-
             _parent = parent;
-            _childs = new List<PProgress>();
-
-            _currentValue = currentValue;
             _lastReported = 0;
         }
 
         public int MaxValue { get; }
-        public int CurrentValue => _currentValue.Get();
+        public int CurrentValue => _lastReported.Get();
         public event EventHandler<int> ProgressChanged;
 
         public void ReportProgress(double percent)
@@ -36,23 +27,15 @@ namespace KursyWalut.Progress
             if (percent < 0.00) NotifyChange(-1);
 
             var computePercent = ComputePercent(percent);
-            var calculateLastReported = CalculateLastReported();
-
-            var incrValue = computePercent - calculateLastReported;
+            var incrValue = computePercent - _lastReported.Get();
             if (incrValue <= 0) return;
 
-            _lastReported.Set(calculateLastReported + incrValue);
-            var cur = _currentValue.Increment(incrValue);
-            _childs.Clear();
-
-            NotifyChange(cur);
+            IncrementProgress(incrValue);
         }
 
         public IPProgress SubPercent(double percentFrom, double percentTo)
         {
-            var child = new PProgress(ComputePercent(percentTo - percentFrom), this, _currentValue);
-            _childs.Add(child);
-            return child;
+            return new PProgress(ComputePercent(percentTo - percentFrom), this);
         }
 
         public IPProgress SubPart(int partIndex, int partCount)
@@ -61,16 +44,17 @@ namespace KursyWalut.Progress
             return SubPercent(partIndex*percentPerPart, (partIndex + 1)*percentPerPart);
         }
 
-        private int CalculateLastReported()
+        private void IncrementProgress(int incrValue)
         {
-            var childsReported = _childs.Sum(c => c.CalculateLastReported());
-            return Math.Max(childsReported, _lastReported.Get());
+            var currentValue = _lastReported.Increment(incrValue);
+            NotifyChange(currentValue);
+
+            _parent?.IncrementProgress(incrValue);
         }
 
         private void NotifyChange(int value)
         {
             ProgressChanged?.Invoke(this, value);
-            _parent?.NotifyChange(value);
         }
 
         private int ComputePercent(double percent)

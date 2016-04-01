@@ -133,13 +133,10 @@ namespace KursyWalut.ProviderImpl
                 if (i%waitFor == 0)
                 {
                     await Task.WhenAll(work);
-//                    p.ReportProgress((i + 1.0)/days.Count);
+                    p.ReportProgress((i + 1.0)/days.Count);
                 }
 #if DEBUG
-                if (i%(days.Count/10) == 0)
-                {
-                    Debug.WriteLine("DL-{0}-{1}", days.Count, i);
-                }
+                if (i%(days.Count/10) == 0) Debug.WriteLine("DL-{0}-{1}", days.Count, i);
 #endif
             }
 
