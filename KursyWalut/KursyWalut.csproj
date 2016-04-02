@@ -106,6 +106,7 @@
     <Compile Include="Cache\InMemCache.cs" />
     <Compile Include="Cache\LocalStorageCache.cs" />
     <Compile Include="Helper\CacheHelper.cs" />
+    <Compile Include="Helper\UiElementToPngHelper.cs" />
     <Compile Include="Serializer\SerializersStore.cs" />
     <Compile Include="Page\MainPage.xaml.cs">
       <DependentUpon>MainPage.xaml</DependentUpon>

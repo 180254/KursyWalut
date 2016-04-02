@@ -2,19 +2,14 @@
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Diagnostics;
-using System.IO;
-using System.Runtime.InteropServices.WindowsRuntime;
-using Windows.Graphics.Imaging;
-using Windows.Storage;
 using Windows.UI.Core;
 using Windows.UI.Xaml;
 using Windows.UI.Xaml.Controls;
 using Windows.UI.Xaml.Input;
-using Windows.UI.Xaml.Media.Imaging;
 using Windows.UI.Xaml.Navigation;
 using KursyWalut.Helper;
 using KursyWalut.Model;
-using WinRTXamlToolkit.Controls.DataVisualization.Charting;
+using WinRTXamlToolkit.AwaitableUI;
 
 // The Blank Page item template is documented at http://go.microsoft.com/fwlink/?LinkId=402352&clcid=0x409
 
@@ -25,6 +20,7 @@ namespace KursyWalut.Page
     /// </summary>
     public sealed partial class MainPage
     {
+        private readonly EventHandler<int> _progressSubscriber;
         private readonly ProviderHelper _providerHelper;
         private object _historyPivotBackup;
         private bool _historyDrawn;
@@ -35,7 +31,8 @@ namespace KursyWalut.Page
             InitializeComponent();
 
             var cache = CacheHelper.GetStandardLsc();
-            _providerHelper = new ProviderHelper(cache, (sender, i) => Vm.Progress = i);
+            _progressSubscriber = (sender, i) => Vm.Progress = i;
+            _providerHelper = new ProviderHelper(cache, _progressSubscriber);
 
             // remove "history" pivot
             _historyPivotBackup = MainPivot.Items?[1];
@@ -150,12 +147,21 @@ namespace KursyWalut.Page
             var selectedItem = listView?.SelectedItem as ExchangeRate;
             if (selectedItem == null) return;
 
+            if (!Equals(Vm.HisCurrency, selectedItem.Currency)
+     && _historyPivotBackup == null)
+            {
+                _historyDrawn = false;
+                                Vm.HisEr = null;
+//                if (HisChart.Series.Count > 0) HisChart.Series.RemoveAt(0);
+            }
+
             // restore history pivot
             if (_historyPivotBackup != null)
             {
                 MainPivot.Items?.Add(_historyPivotBackup);
                 _historyPivotBackup = null;
             }
+ 
 
             Vm.HisCurrency = selectedItem.Currency;
             MainPivot.SelectedIndex = 1;
@@ -164,12 +170,7 @@ namespace KursyWalut.Page
 
         // ---------------------------------------------------------------------------------------------------------------
 
-        private void HisDraw_OnClick(object sender, RoutedEventArgs e)
-        {
-            HistoryDraw();
-        }
-
-        private async void HistoryDraw()
+        private async void HisDraw_OnClick(object sender, RoutedEventArgs e)
         {
 #if DEBUG
             var sw = Stopwatch.StartNew();
@@ -191,6 +192,8 @@ namespace KursyWalut.Page
                     Vm.HisCurrency, Vm.HisDateFrom.Value.Date, Vm.HisDateTo.Value.Date,
                     ers, h.Progress);
                 Vm.HisEr = ers;
+//                HisChart.UpdateLayout();
+//                await HisChart.WaitForLayoutUpdateAsync();
 
                 await h.FlushCache();
             }
@@ -200,7 +203,7 @@ namespace KursyWalut.Page
             Vm.HisSaveEnabled = true;
 
 #if DEBUG
-            DebugElapsedTime(sw, nameof(HistoryDraw));
+            DebugElapsedTime(sw, nameof(HisDraw_OnClick));
 #endif
         }
 
@@ -222,35 +225,23 @@ namespace KursyWalut.Page
             {
                 Vm.HisDateTo = e.NewDate.Value.Date;
             }
-      
         }
 
         private async void HisSaveButton_OnClick(object sender, RoutedEventArgs e)
         {
-            var target = new RenderTargetBitmap();
-            await target.RenderAsync(HisChart);
-            var pixelBuffer = await target.GetPixelsAsync();
+            Vm.ChangesEnabled = false;
 
-            var savePicker = new Windows.Storage.Pickers.FileSavePicker
+            var suggestedName = string.Format("{0}_{1}{2}",
+                Vm.HisCurrency.Code,
+                Vm.HisDateFrom?.ToString("ddMMyy") ?? "?",
+                Vm.HisDateTo?.ToString("ddMMyy") ?? "?");
+
+            using (var h = new UiElementToPngHelper(HisChart, suggestedName, _progressSubscriber))
             {
-                SuggestedStartLocation = Windows.Storage.Pickers.PickerLocationId.PicturesLibrary
-            };
-            savePicker.FileTypeChoices.Add(".png", new List<string> { ".png" });
-            var file = await savePicker.PickSaveFileAsync();
-
-            using (var stream = await file.OpenAsync(FileAccessMode.ReadWrite))
-            {
-                var encoder = await BitmapEncoder.CreateAsync(BitmapEncoder.PngEncoderId, stream);
-                encoder.SetPixelData(
-                    BitmapPixelFormat.Bgra8,
-                    BitmapAlphaMode.Straight,
-                    (uint)target.PixelWidth,
-                    (uint)target.PixelHeight, 96d, 96d,
-                    pixelBuffer.ToArray());
-
-                await encoder.FlushAsync();
+                await h.Execute();
             }
 
+            Vm.ChangesEnabled = true;
         }
 
         // ---------------------------------------------------------------------------------------------------------------
