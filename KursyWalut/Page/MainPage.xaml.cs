@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Diagnostics;
 using Windows.UI.Core;
@@ -9,7 +8,7 @@ using Windows.UI.Xaml.Input;
 using Windows.UI.Xaml.Navigation;
 using KursyWalut.Helper;
 using KursyWalut.Model;
-using WinRTXamlToolkit.AwaitableUI;
+using WinRTXamlToolkit.Controls.DataVisualization.Charting;
 
 // The Blank Page item template is documented at http://go.microsoft.com/fwlink/?LinkId=402352&clcid=0x409
 
@@ -148,11 +147,16 @@ namespace KursyWalut.Page
             if (selectedItem == null) return;
 
             if (!Equals(Vm.HisCurrency, selectedItem.Currency)
-     && _historyPivotBackup == null)
+                && (_historyPivotBackup == null))
             {
                 _historyDrawn = false;
-                                Vm.HisEr = null;
-//                if (HisChart.Series.Count > 0) HisChart.Series.RemoveAt(0);
+                Vm.HisEr = null;
+
+                // remove whole chart, and be empty space again - render hack
+                var series = HisChart.Series[0];
+                (series as LineSeries)?.Points.Clear();
+                HisChart.Series.RemoveAt(0);
+                HisChart.Series.Add(series);
             }
 
             // restore history pivot
@@ -161,7 +165,7 @@ namespace KursyWalut.Page
                 MainPivot.Items?.Add(_historyPivotBackup);
                 _historyPivotBackup = null;
             }
- 
+
 
             Vm.HisCurrency = selectedItem.Currency;
             MainPivot.SelectedIndex = 1;
