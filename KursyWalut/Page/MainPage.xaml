@@ -15,8 +15,23 @@
         <converters:StringFormatConverter x:Key="StringFormatConverter" />
     </Page.Resources>
 
+    <Page.BottomAppBar>
+        <AppBar IsOpen="False" IsSticky="True">
+            <Grid Margin="2,2,2,2">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+
+                <AppBarButton x:Uid="HisSaveButton" Grid.Column="1" Icon="Save" Label="?"
+                              IsEnabled="{Binding HisSaveEnabled}"
+                              Click="HisSaveButton_OnClick"/>
+            </Grid>
+        </AppBar>
+    </Page.BottomAppBar>
+
     <Grid Background="{ThemeResource ApplicationPageBackgroundThemeBrush}">
-        <Pivot Name="MainPivot">
+        <Pivot Name="MainPivot" SelectionChanged="MainPivot_OnSelectionChanged">
 
             <PivotItem>
                 <PivotItem.Header>
@@ -30,6 +45,7 @@
                         <RowDefinition Height="*" />
                         <RowDefinition Height="40" />
                         <RowDefinition Height="15" />
+                        <RowDefinition Height="5" />
                     </Grid.RowDefinitions>
 
                     <ListView Grid.Row="0" Margin="0,5,0,0" SelectionMode="Single"
@@ -65,11 +81,10 @@
                                         CalendarViewDayItemChanging="AvgDatePicker_OnCalendarViewDayItemChanging"
                                         DateChanged="AvgDatePicker_OnDateChanged" />
 
-                    <ProgressBar Name="ProgressOne" Grid.Row="2" Height="15" Margin="0,5,0,0" Minimum="0" Maximum="10000"
+                    <ProgressBar Grid.Row="2" Height="15" Margin="0,5,0,0" Minimum="0" Maximum="10000"
                                  Value="{Binding Progress}" />
                 </Grid>
             </PivotItem>
-
 
             <PivotItem>
                 <PivotItem.Header>
@@ -85,9 +100,10 @@
                         <RowDefinition Height="70" />
                         <RowDefinition Height="32" />
                         <RowDefinition Height="15" />
+                        <RowDefinition Height="5" />
                     </Grid.RowDefinitions>
 
-                    <c:Chart Grid.Row="0">
+                    <c:Chart x:Name="HisChart" Grid.Row="0">
                         <c:Chart.LegendStyle>
                             <Style TargetType="v:Legend">
                                 <Setter Property="Width" Value="0" />
@@ -101,7 +117,8 @@
                         </c:Chart.TitleStyle>
 
 
-                        <c:LineSeries ItemsSource="{Binding HisEr}" IndependentValuePath="Day"
+                        <c:LineSeries ItemsSource="{Binding HisEr}"
+                                      IndependentValuePath="Day"
                                       DependentValuePath="AverageRate">
 
                             <c:LineSeries.DataPointStyle>
@@ -133,9 +150,9 @@
                         </Grid.ColumnDefinitions>
 
 
-                        <TextBlock x:Uid="DateFrom" Text="?" Grid.Row="0" Grid.Column="0"
+                        <TextBlock x:Uid="HisDateFrom" Text="?" Grid.Row="0" Grid.Column="0"
                                    HorizontalAlignment="Left" VerticalAlignment="Center" />
-                        <TextBlock x:Uid="DateTo" Text="?" Grid.Row="1" Grid.Column="0"
+                        <TextBlock x:Uid="HisDateTo" Text="?" Grid.Row="1" Grid.Column="0"
                                    HorizontalAlignment="Left" VerticalAlignment="Center" />
 
                         <CalendarDatePicker Grid.Row="0" Grid.Column="1" Margin="5,0,0,0" HorizontalAlignment="Stretch"
@@ -155,10 +172,10 @@
                     <Button Grid.Row="2" Height="32" Margin="0,5,0,0" HorizontalAlignment="Stretch"
                             Background="#674E23"
                             IsEnabled="{Binding HisActionEnabled}" Click="HisDraw_OnClick">
-                        <TextBlock x:Uid="DrawHistory" Text="?" VerticalAlignment="Center" TextAlignment="Center" />
+                        <TextBlock x:Uid="HisDraw" Text="?" VerticalAlignment="Center" TextAlignment="Center" />
                     </Button>
 
-                    <ProgressBar Name="ProgressTwo" Grid.Row="3" Height="15" Margin="0,5,0,0" Minimum="0" Maximum="10000"
+                    <ProgressBar Grid.Row="3" Height="15" Margin="0,5,0,0" Minimum="0" Maximum="10000"
                                  Value="{Binding Progress}" />
                 </Grid>
             </PivotItem>

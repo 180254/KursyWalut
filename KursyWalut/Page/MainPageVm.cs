@@ -22,6 +22,7 @@ namespace KursyWalut.Page
         private DateTimeOffset _hisDateToMax;
         private IList<ExchangeRate> _hisEr;
         private bool _hisActionEnabled;
+        private bool _hisSaveEnabled;
 
 
         // ---------------------------------------------------------------------------------------------------------------
@@ -99,6 +100,13 @@ namespace KursyWalut.Page
             set { Set(() => HisActionEnabled, ref _hisActionEnabled, value); }
         }
 
+        public bool HisSaveEnabled
+        {
+            get { return _hisSaveEnabled; }
+            set { Set(() => HisSaveEnabled, ref _hisSaveEnabled, value); }
+        }
+
+
         // ---------------------------------------------------------------------------------------------------------------
 
         public int Progress
@@ -107,12 +115,10 @@ namespace KursyWalut.Page
             set { Set(() => Progress, ref _progress, value); }
         }
 
-
         public bool ChangesEnabled
         {
             set { AvgActionEnabled = HisActionEnabled = value; }
         }
-
 
         // ---------------------------------------------------------------------------------------------------------------
 

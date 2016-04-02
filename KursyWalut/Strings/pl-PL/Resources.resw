@@ -120,16 +120,19 @@
   <data name="AvgPivotHeader.Text" xml:space="preserve">
     <value>Średnie kursy walut</value>
   </data>
-  <data name="DateFrom.Text" xml:space="preserve">
+  <data name="HisDateFrom.Text" xml:space="preserve">
     <value>Data początkowa</value>
   </data>
-  <data name="DateTo.Text" xml:space="preserve">
+  <data name="HisDateTo.Text" xml:space="preserve">
     <value>Data końcowa</value>
   </data>
-  <data name="DrawHistory.Text" xml:space="preserve">
+  <data name="HisDraw.Text" xml:space="preserve">
     <value>Rysuj historię</value>
   </data>
   <data name="HisPivotHeader.Text" xml:space="preserve">
     <value>Historia kursu</value>
+  </data>
+  <data name="HisSaveButton.Label" xml:space="preserve">
+    <value>Zapisz wykres</value>
   </data>
 </root>

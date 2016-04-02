@@ -1,13 +1,20 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Diagnostics;
+using System.IO;
+using System.Runtime.InteropServices.WindowsRuntime;
+using Windows.Graphics.Imaging;
+using Windows.Storage;
 using Windows.UI.Core;
 using Windows.UI.Xaml;
 using Windows.UI.Xaml.Controls;
 using Windows.UI.Xaml.Input;
+using Windows.UI.Xaml.Media.Imaging;
 using Windows.UI.Xaml.Navigation;
 using KursyWalut.Helper;
 using KursyWalut.Model;
+using WinRTXamlToolkit.Controls.DataVisualization.Charting;
 
 // The Blank Page item template is documented at http://go.microsoft.com/fwlink/?LinkId=402352&clcid=0x409
 
@@ -20,6 +27,7 @@ namespace KursyWalut.Page
     {
         private readonly ProviderHelper _providerHelper;
         private object _historyPivotBackup;
+        private bool _historyDrawn;
 
         public MainPage()
         {
@@ -142,6 +150,7 @@ namespace KursyWalut.Page
             var selectedItem = listView?.SelectedItem as ExchangeRate;
             if (selectedItem == null) return;
 
+            // restore history pivot
             if (_historyPivotBackup != null)
             {
                 MainPivot.Items?.Add(_historyPivotBackup);
@@ -186,8 +195,10 @@ namespace KursyWalut.Page
                 await h.FlushCache();
             }
 
-
             Vm.ChangesEnabled = true;
+            _historyDrawn = true;
+            Vm.HisSaveEnabled = true;
+
 #if DEBUG
             DebugElapsedTime(sw, nameof(HistoryDraw));
 #endif
@@ -211,9 +222,43 @@ namespace KursyWalut.Page
             {
                 Vm.HisDateTo = e.NewDate.Value.Date;
             }
+      
+        }
+
+        private async void HisSaveButton_OnClick(object sender, RoutedEventArgs e)
+        {
+            var target = new RenderTargetBitmap();
+            await target.RenderAsync(HisChart);
+            var pixelBuffer = await target.GetPixelsAsync();
+
+            var savePicker = new Windows.Storage.Pickers.FileSavePicker
+            {
+                SuggestedStartLocation = Windows.Storage.Pickers.PickerLocationId.PicturesLibrary
+            };
+            savePicker.FileTypeChoices.Add(".png", new List<string> { ".png" });
+            var file = await savePicker.PickSaveFileAsync();
+
+            using (var stream = await file.OpenAsync(FileAccessMode.ReadWrite))
+            {
+                var encoder = await BitmapEncoder.CreateAsync(BitmapEncoder.PngEncoderId, stream);
+                encoder.SetPixelData(
+                    BitmapPixelFormat.Bgra8,
+                    BitmapAlphaMode.Straight,
+                    (uint)target.PixelWidth,
+                    (uint)target.PixelHeight, 96d, 96d,
+                    pixelBuffer.ToArray());
+
+                await encoder.FlushAsync();
+            }
+
         }
 
         // ---------------------------------------------------------------------------------------------------------------
+
+        private void MainPivot_OnSelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            Vm.HisSaveEnabled = (MainPivot.SelectedIndex == 1) && _historyDrawn;
+        }
 
         private void OnBackRequested(object s, BackRequestedEventArgs e)
         {
