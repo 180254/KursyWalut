@@ -142,13 +142,14 @@ namespace KursyWalut.ProviderImpl
             {
                 var day = days[i];
                 var progress = p.SubPart(i, days.Count);
-                work.Add(GetExchangeRate(currency, day, progress));
+                work.Add(GetExchangeRateNullable(currency, day, progress));
 
 //                SpinWait.SpinUntil(() => work.Count(w => !w.IsCompleted) < waitFor);
                 if ((i%waitFor == 0) || (i == days.Count - 1))
                 {
                     var exchangeRates = await Task.WhenAll(work);
-                    ers.AddRange(exchangeRates);
+                    var nonNullEr = exchangeRates.Where(c => c != null);
+                    ers.AddRange(nonNullEr);
 
                     work.Clear();
                     p.ReportProgress((i + 1.0)/days.Count);
@@ -157,6 +158,12 @@ namespace KursyWalut.ProviderImpl
                 if (i%(days.Count/10) == 0) Debug.WriteLine("DL-{0}-{1}", days.Count, i);
 #endif
             }
+        }
+
+        private async Task<ExchangeRate> GetExchangeRateNullable(Currency currency, DateTime day, IPProgress p)
+        {
+            var exchangeRates = await GetExchangeRates(day, p);
+            return exchangeRates.FirstOrDefault(e => e.Currency.Equals(currency));
         }
     }
 }

@@ -29,7 +29,6 @@ namespace KursyWalut.Helper
 
         public void Dispose()
         {
-            throw new NotImplementedException();
         }
 
         public async Task Execute()

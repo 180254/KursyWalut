@@ -235,7 +235,7 @@ namespace KursyWalut.Page
         {
             Vm.ChangesEnabled = false;
 
-            var suggestedName = string.Format("{0}_{1}{2}",
+            var suggestedName = string.Format("{0}_{1}-{2}",
                 Vm.HisCurrency.Code,
                 Vm.HisDateFrom?.ToString("ddMMyy") ?? "?",
                 Vm.HisDateTo?.ToString("ddMMyy") ?? "?");
