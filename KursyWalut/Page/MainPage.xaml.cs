@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Diagnostics;
 using Windows.UI.Core;
@@ -195,9 +196,13 @@ namespace KursyWalut.Page
                 await h.ErService.GetExchangeRateHistory(
                     Vm.HisCurrency, Vm.HisDateFrom.Value.Date, Vm.HisDateTo.Value.Date,
                     ers, h.Progress);
-                Vm.HisEr = ers;
-//                HisChart.UpdateLayout();
-//                await HisChart.WaitForLayoutUpdateAsync();
+
+                var ersApprox = Approx(ers, (int) (HisChart.ActualWidth*1.05));
+                Vm.HisEr = ersApprox;
+                ;
+                //                Vm.HisEr = ers;
+                //                HisChart.UpdateLayout();
+                //                await HisChart.WaitForLayoutUpdateAsync();
 
                 await h.FlushCache();
             }
@@ -209,6 +214,23 @@ namespace KursyWalut.Page
 #if DEBUG
             DebugElapsedTime(sw, nameof(HisDraw_OnClick));
 #endif
+        }
+
+        private IList<T> Approx<T>(IList<T> ers, int maxPoints)
+        {
+            var newErs = new ObservableCollection<T>();
+
+            var count = ers.Count;
+            var incr = (int) (count/(double) maxPoints) +1;
+
+            for (var i = 0; i < ers.Count; i += incr)
+                newErs.Add(ers[i]);
+
+            if (count%incr != 0)
+                newErs.Add(ers[count - 1]);
+
+
+            return newErs;
         }
 
         private void HisDateFromPicker_OnDateChanged(
