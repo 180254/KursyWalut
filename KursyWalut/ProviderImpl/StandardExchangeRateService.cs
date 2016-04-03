@@ -6,6 +6,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using Cimbalino.Toolkit.Extensions;
 using KursyWalut.Cache;
+using KursyWalut.Helper;
 using KursyWalut.Model;
 using KursyWalut.Progress;
 using KursyWalut.Provider;
@@ -57,19 +58,8 @@ namespace KursyWalut.ProviderImpl
 
         public async Task<ExchangeRate> GetExchangeRate(Currency currency, DateTime day, IPProgress p)
         {
-            IList<ExchangeRate> exchangeRates = null;
-            try
-            {
-                exchangeRates = await GetExchangeRates(day, p);
-                return exchangeRates.First(e => e.Currency.Equals(currency)); // possible InvalidOperationException
-            }
-            catch (Exception ex) when (ex is InvalidOperationException)
-            {
-                throw new ArgumentException("invalid currency; want " + currency + ";" +
-                                            "day " + day + "; " +
-                                            "avail " +
-                                            string.Join<Currency>(",", exchangeRates?.Select(e => e.Currency).ToArray()));
-            }
+            var exchangeRates = await GetExchangeRates(day, p);
+            return exchangeRates.FirstOrDefault(e => e.Currency.Equals(currency));
         }
 
         public async Task<DateTime> GetFirstAvailableDay(IPProgress p)
@@ -95,9 +85,9 @@ namespace KursyWalut.ProviderImpl
             return availableDays;
         }
 
-        public async Task GetExchangeRateHistory(
+        public async Task GetExchangeRateAveragedHistory(
             Currency currency, DateTime startDay, DateTime endDay,
-            ICollection<ExchangeRate> ers, IPProgress p)
+            ICollection<ExchangeRate> ers, int expectedSize, IPProgress p)
         {
             if (startDay > endDay)
                 throw new ArgumentException("start.day > stop.day");
@@ -107,11 +97,16 @@ namespace KursyWalut.ProviderImpl
                 throw new ArgumentException("end.day > GetLastvailableDay()");
 
             var availableDays = await GetDaysBetweenYears(startDay.Year, endDay.Year, p.SubPercent(0.10, 0.20));
-            var properDays = availableDays.Where(day => (day >= startDay) && (day <= endDay)).ToImmutableList();
+            var properDays = availableDays
+                .Where(day => (day >= startDay) && (day <= endDay))
+                .Averaged(expectedSize)
+                .ToImmutableList();
+
             await GetExchangeRatesInDays(properDays, currency, ers, p.SubPercent(0.20, 1.00));
 
             p.ReportProgress(1.00);
         }
+
 
         private async Task<IList<DateTime>> GetDaysBetweenYears(int startYear, int endYear, IPProgress p)
         {
@@ -142,7 +137,7 @@ namespace KursyWalut.ProviderImpl
             {
                 var day = days[i];
                 var progress = p.SubPart(i, days.Count);
-                work.Add(GetExchangeRateNullable(currency, day, progress));
+                work.Add(GetExchangeRate(currency, day, progress));
 
 //                SpinWait.SpinUntil(() => work.Count(w => !w.IsCompleted) < waitFor);
                 if ((i%waitFor == 0) || (i == days.Count - 1))
@@ -158,12 +153,6 @@ namespace KursyWalut.ProviderImpl
                 if (i%(days.Count/10) == 0) Debug.WriteLine("DL-{0}-{1}", days.Count, i);
 #endif
             }
-        }
-
-        private async Task<ExchangeRate> GetExchangeRateNullable(Currency currency, DateTime day, IPProgress p)
-        {
-            var exchangeRates = await GetExchangeRates(day, p);
-            return exchangeRates.FirstOrDefault(e => e.Currency.Equals(currency));
         }
     }
 }

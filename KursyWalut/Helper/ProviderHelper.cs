@@ -66,6 +66,7 @@ namespace KursyWalut.Helper
 
                     _providerHelper._alreadyInit = true;
                 }
+
                 _pprogress.ReportProgress(0.05);
             }
 

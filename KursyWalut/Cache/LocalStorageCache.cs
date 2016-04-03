@@ -79,23 +79,23 @@ namespace KursyWalut.Cache
         }
 
 
-        private void Serialize<T>(T value, Stream fileStream)
+        private void Serialize<T>(T value, Stream stream)
         {
-            _serializers.GetSerializer<T>().Serialize(value, fileStream);
+            _serializers.GetSerializer<T>().Serialize(value, stream);
         }
 
-        private T Deserialize<T>(Stream fileStream)
+        private T Deserialize<T>(Stream stream)
         {
             try
             {
-                var deserialized = _serializers.GetSerializer<T>().Deserialize(fileStream);
+                var deserialized = _serializers.GetSerializer<T>().Deserialize(stream);
 
                 // ReSharper disable once InvertIf
-                if (fileStream.Position != fileStream.Length)
+                if (stream.Position != stream.Length)
                 {
                     var exceptionMsg = string.Format(
                         "some data omitted: stream.position[{0}] != stream.length[{1}]",
-                        fileStream.Position, fileStream.Length);
+                        stream.Position, stream.Length);
                     throw new InvalidCastException(exceptionMsg);
                 }
 
