@@ -5,6 +5,7 @@ namespace KursyWalut.Progress
     public class PProgress : IPProgress
     {
         private readonly Integer _lastReported;
+        private readonly Integer _lastNotified;
         private readonly PProgress _parent;
 
         public PProgress(int maxValue) : this(maxValue, null)
@@ -16,6 +17,7 @@ namespace KursyWalut.Progress
             MaxValue = maxValue;
             _parent = parent;
             _lastReported = 0;
+            _lastNotified = 0;
         }
 
         public int MaxValue { get; }
@@ -47,14 +49,23 @@ namespace KursyWalut.Progress
         private void IncrementProgress(int incrValue)
         {
             var currentValue = _lastReported.Increment(incrValue);
-            NotifyChange(currentValue);
+            if (_parent == null) NotifyChange(currentValue);
 
             _parent?.IncrementProgress(incrValue);
         }
 
         private void NotifyChange(int value)
         {
-            ProgressChanged?.Invoke(this, value);
+            var change = value - _lastNotified.Get();
+            var percentageChange = change/(1.0d*MaxValue);
+            var isMax = value == MaxValue;
+
+            // ReSharper disable once InvertIf
+            if ((percentageChange >= 0.01d) || isMax)
+            {
+                _lastNotified.Set(value);
+                ProgressChanged?.Invoke(this, value);
+            }
         }
 
         private int ComputePercent(double percent)
