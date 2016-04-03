@@ -6,19 +6,19 @@ namespace KursyWalut.Serializer
 {
     public class ExchangeRateSerializer : ISerializer<ExchangeRate>
     {
-        private readonly ISerializer<DateTime> _dateTimeSerializer;
+        private readonly ISerializer<DateTimeOffset> _dateTimeOffsetSerializer;
         private readonly ISerializer<Currency> _currencySerializer;
 
         public ExchangeRateSerializer(
-            ISerializer<DateTime> dateTimeSerializer,
+            ISerializer<DateTimeOffset> dateTimeOffsetSerializer,
             ISerializer<Currency> currencySerializer)
         {
-            _dateTimeSerializer = dateTimeSerializer;
+            _dateTimeOffsetSerializer = dateTimeOffsetSerializer;
             _currencySerializer = currencySerializer;
         }
 
         public ExchangeRateSerializer(SerializersStore store) : this(
-            store.GetSerializer<DateTime>(),
+            store.GetSerializer<DateTimeOffset>(),
             store.GetSerializer<Currency>())
         {
         }
@@ -26,7 +26,7 @@ namespace KursyWalut.Serializer
         public void Serialize(ExchangeRate obj, Stream stream)
         {
             var writer = new BinaryWriter(stream);
-            _dateTimeSerializer.Serialize(obj.Day, stream);
+            _dateTimeOffsetSerializer.Serialize(obj.Day, stream);
             _currencySerializer.Serialize(obj.Currency, stream);
             writer.Write(obj.AverageRate);
         }
@@ -34,7 +34,7 @@ namespace KursyWalut.Serializer
         public ExchangeRate Deserialize(Stream stream)
         {
             var reader = new BinaryReader(stream);
-            var day = _dateTimeSerializer.Deserialize(stream);
+            var day = _dateTimeOffsetSerializer.Deserialize(stream);
             var currency = _currencySerializer.Deserialize(stream);
             var avarageRate = reader.ReadDouble();
             return new ExchangeRate(day, currency, avarageRate);

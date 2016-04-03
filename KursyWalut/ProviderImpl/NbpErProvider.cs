@@ -13,34 +13,35 @@ using KursyWalut.Provider;
 
 namespace KursyWalut.ProviderImpl
 {
-    public class NbpExchangeRatesProvider : IExchangeRatesProvider, ICacheable
+    public class NbpErProvider : IErProvider, ICacheable
     {
         private readonly Encoding _utf8;
         private readonly Encoding _iso88592;
 
         // ---------------------------------------------------------------------------------------------------------------
 
-        private readonly NbpExchangeRateExtractor _extractor;
+        private readonly NbpErExtractor _extractor;
 
         private readonly ICache _cache;
-        private IDictionary<DateTime, string> _dayToFilename;
+        private IDictionary<DateTimeOffset, string> _dayToFilename;
 
         // ---------------------------------------------------------------------------------------------------------------
 
-        public NbpExchangeRatesProvider(ICache cache)
+        public NbpErProvider(ICache cache)
         {
             Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
             _utf8 = new UTF8Encoding(false);
             _iso88592 = Encoding.GetEncoding("ISO-8859-2");
 
-            _extractor = new NbpExchangeRateExtractor();
+            _extractor = new NbpErExtractor();
             _cache = cache;
         }
 
         public async Task InitCache(IPProgress p)
         {
-            _dayToFilename = await _cache.Get<IDictionary<DateTime, string>>(
-                nameof(_dayToFilename), () => new Dictionary<DateTime, string>());
+            _dayToFilename =
+                await _cache.Get<IDictionary<DateTimeOffset, string>>(nameof(_dayToFilename))
+                ?? new Dictionary<DateTimeOffset, string>();
             p.ReportProgress(1.00);
         }
 
@@ -62,29 +63,21 @@ namespace KursyWalut.ProviderImpl
             return await Task.Run(() => years);
         }
 
-        public async Task<IList<DateTime>> GetAvailableDays(int year, IPProgress p)
+        public async Task<IList<DateTimeOffset>> GetAvailableDays(int year, IPProgress p)
         {
             try
             {
                 var availYears = await GetAvailableYears(p.SubPercent(0.00, 0.15));
-                // ReSharper disable once UnusedVariable
                 var first = availYears.First(y => y.Equals(year)); // possible InvalidOperationException
 
-                var year2 = year == DateTime.Now.Year ? "" : year.ToString();
-                var dir = await _extractor.GetHttpResponse("http://www.nbp.pl/kursy/xml/dir" + year2 + ".txt", _utf8);
-                var filenames = _extractor.ParseFilenames(dir);
+                var filenames = await DownloadFilenamesForYear(year);
                 p.ReportProgress(0.70);
 
-                var result = new List<DateTime>();
-                foreach (var filename in filenames.Where(f => f.StartsWith("a", StringComparison.Ordinal)))
-                {
-                    var day = _extractor.ParseDateTime(filename);
-                    _dayToFilename.Add(day, filename);
-                    result.Add(day);
-                }
-
+                var avgFilenames = filenames.Where(f => f.StartsWith("a", StringComparison.Ordinal));
+                var result = ParseAndCacheDates(avgFilenames);
                 p.ReportProgress(1.00);
-                return result.AsReadOnly();
+
+                return result;
             }
 
             catch (Exception ex) when (ex is InvalidOperationException)
@@ -99,22 +92,23 @@ namespace KursyWalut.ProviderImpl
             }
         }
 
-        public async Task<IList<ExchangeRate>> GetExchangeRates(DateTime day, IPProgress p)
+
+        public async Task<IList<ExchangeRate>> GetExchangeRates(DateTimeOffset day, IPProgress p)
         {
             var response = "?";
             try
             {
                 var filename = _dayToFilename[day]; // possible KeyNotFoundException
-                response =
-                    await _extractor.GetHttpResponse("http://www.nbp.pl/kursy/xml/" + filename + ".xml", _iso88592);
-
+                var url = string.Format("http://www.nbp.pl/kursy/xml/{0}.xml", filename);
+                response = await _extractor.GetHttpResponse(url, _iso88592);
                 p.ReportProgress(0.60);
+
                 var xml = XDocument.Load(new StringReader(response));
-
                 p.ReportProgress(0.70);
-                var exchangeRates = _extractor.ParseExchangeRates(xml, day);
 
+                var exchangeRates = _extractor.ParseExchangeRates(xml, day);
                 p.ReportProgress(1.00);
+
                 return exchangeRates;
             }
 
@@ -126,6 +120,28 @@ namespace KursyWalut.ProviderImpl
             {
                 throw new IOException("response unavailable or in unexpected format(1); response = " + response, ex);
             }
+        }
+
+        private async Task<IEnumerable<string>> DownloadFilenamesForYear(int year)
+        {
+            var urlYear = year == DateTimeOffset.Now.Year ? "" : year.ToString();
+            var url = "http://www.nbp.pl/kursy/xml/dir" + urlYear + ".txt";
+
+            var dirResponse = await _extractor.GetHttpResponse(url, _utf8);
+            return _extractor.ParseFilenames(dirResponse);
+        }
+
+        private IList<DateTimeOffset> ParseAndCacheDates(IEnumerable<string> filenames)
+        {
+            var result = new List<DateTimeOffset>();
+            foreach (var filename in filenames)
+            {
+                var day = _extractor.ParseDateTimeOffset(filename);
+                _dayToFilename.Add(day, filename);
+                result.Add(day);
+            }
+
+            return result.AsReadOnly();
         }
     }
 }

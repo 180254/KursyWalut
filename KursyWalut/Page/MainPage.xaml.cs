@@ -92,7 +92,7 @@ namespace KursyWalut.Page
 
         // ---------------------------------------------------------------------------------------------------------------
 
-        private async void AvgReload(DateTime date)
+        private async void AvgReload(DateTimeOffset date)
         {
 #if DEBUG
             var sw = Stopwatch.StartNew();
@@ -133,8 +133,8 @@ namespace KursyWalut.Page
             // ReSharper disable once InvertIf
             if ((e.NewDate != null) && Vm.AvgActionEnabled)
             {
-                AvgReload(e.NewDate.Value.Date);
-                Vm.AvgDate = e.NewDate.Value.Date;
+                AvgReload(e.NewDate.Value);
+                Vm.AvgDate = e.NewDate.Value;
             }
         }
 
@@ -154,7 +154,7 @@ namespace KursyWalut.Page
 
                 // remove whole chart, and be empty space again - render hack
                 var series = HisChart.Series[0];
-                (series as LineSeries)?.Points.Clear();
+                (series as LineSeries)?.Points?.Clear();
                 HisChart.Series.RemoveAt(0);
                 HisChart.Series.Add(series);
             }
@@ -193,11 +193,10 @@ namespace KursyWalut.Page
 
                 var ers = new ObservableCollection<ExchangeRate>();
                 await h.ErService.GetExchangeRateAveragedHistory(
-                    Vm.HisCurrency, Vm.HisDateFrom.Value.Date, Vm.HisDateTo.Value.Date,
+                    Vm.HisCurrency, Vm.HisDateFrom.Value, Vm.HisDateTo.Value,
                     ers, (int) (HisChart.ActualWidth*1.05), h.Progress);
 
                 Vm.HisEr = ers;
-
                 await h.FlushCache();
             }
 
@@ -216,7 +215,7 @@ namespace KursyWalut.Page
         {
             if (e.NewDate != null)
             {
-                Vm.HisDateFrom = e.NewDate.Value.Date;
+                Vm.HisDateFrom = e.NewDate.Value;
             }
         }
 
@@ -226,7 +225,7 @@ namespace KursyWalut.Page
         {
             if (e.NewDate != null)
             {
-                Vm.HisDateTo = e.NewDate.Value.Date;
+                Vm.HisDateTo = e.NewDate.Value;
             }
         }
 

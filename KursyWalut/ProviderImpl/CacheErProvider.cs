@@ -8,16 +8,16 @@ using KursyWalut.Provider;
 
 namespace KursyWalut.ProviderImpl
 {
-    public class CacheExchangeRateProvider : IExchangeRatesProvider, ICacheable
+    public class CacheErProvider : IErProvider, ICacheable
     {
-        private readonly IExchangeRatesProvider _exchangeRatesProvider;
+        private readonly IErProvider _exchangeRatesProvider;
         private readonly ICache _cache;
 
         private IList<int> _availYears;
-        private IDictionary<int, IList<DateTime>> _yearToDays;
-        private IDictionary<DateTime, IList<ExchangeRate>> _dayToEr;
+        private IDictionary<int, IList<DateTimeOffset>> _yearToDays;
+        private IDictionary<DateTimeOffset, IList<ExchangeRate>> _dayToEr;
 
-        public CacheExchangeRateProvider(IExchangeRatesProvider exchangeRatesProvider, ICache cache)
+        public CacheErProvider(IErProvider exchangeRatesProvider, ICache cache)
         {
             _exchangeRatesProvider = exchangeRatesProvider;
             _cache = cache;
@@ -25,22 +25,22 @@ namespace KursyWalut.ProviderImpl
 
         public async Task InitCache(IPProgress p)
         {
-            _availYears = await _cache.Get<IList<int>>(
-                nameof(_availYears), () => null);
+            _availYears = await _cache.Get<IList<int>>(nameof(_availYears));
             p.ReportProgress(0.10);
 
-            _yearToDays = await _cache.Get<IDictionary<int, IList<DateTime>>>(
-                nameof(_yearToDays), () => new Dictionary<int, IList<DateTime>>());
+            _yearToDays =
+                await _cache.Get<IDictionary<int, IList<DateTimeOffset>>>(nameof(_yearToDays))
+                ?? new Dictionary<int, IList<DateTimeOffset>>();
             p.ReportProgress(0.20);
 
-            _dayToEr = await _cache.Get<IDictionary<DateTime, IList<ExchangeRate>>>(
-                nameof(_dayToEr), () => new Dictionary<DateTime, IList<ExchangeRate>>());
+            _dayToEr =
+                await _cache.Get<IDictionary<DateTimeOffset, IList<ExchangeRate>>>(nameof(_dayToEr))
+                ?? new Dictionary<DateTimeOffset, IList<ExchangeRate>>();
             p.ReportProgress(0.50);
 
             var initCache = (_exchangeRatesProvider as ICacheable)?.InitCache(p.SubPercent(0.50, 1.00));
             if (initCache != null)
                 await initCache;
-
             p.ReportProgress(1.00);
         }
 
@@ -58,7 +58,6 @@ namespace KursyWalut.ProviderImpl
             var flushCache = (_exchangeRatesProvider as ICacheable)?.FlushCache(p.SubPercent(0.50, 1.00));
             if (flushCache != null)
                 await flushCache;
-
             p.ReportProgress(1.00);
         }
 
@@ -67,13 +66,13 @@ namespace KursyWalut.ProviderImpl
             return _availYears ?? (_availYears = await _exchangeRatesProvider.GetAvailableYears(p));
         }
 
-        public async Task<IList<DateTime>> GetAvailableDays(int year, IPProgress p)
+        public async Task<IList<DateTimeOffset>> GetAvailableDays(int year, IPProgress p)
         {
             return await GetOrCalculate(_yearToDays, year,
                 () => _exchangeRatesProvider.GetAvailableDays(year, p), p);
         }
 
-        public async Task<IList<ExchangeRate>> GetExchangeRates(DateTime day, IPProgress p)
+        public async Task<IList<ExchangeRate>> GetExchangeRates(DateTimeOffset day, IPProgress p)
         {
             return await GetOrCalculate(_dayToEr, day,
                 () => _exchangeRatesProvider.GetExchangeRates(day, p), p);

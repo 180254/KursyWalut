@@ -25,7 +25,7 @@
 
                 <AppBarButton x:Uid="HisSaveButton" Grid.Column="1" Icon="Save" Label="?"
                               IsEnabled="{Binding HisSaveEnabled}"
-                              Click="HisSaveButton_OnClick"/>
+                              Click="HisSaveButton_OnClick" />
             </Grid>
         </AppBar>
     </Page.BottomAppBar>
@@ -116,9 +116,8 @@
                             </Style>
                         </c:Chart.TitleStyle>
 
-
                         <c:LineSeries ItemsSource="{Binding HisEr}"
-                                      IndependentValuePath="Day"
+                                      IndependentValuePath="DayDateTimeUtc"
                                       DependentValuePath="AverageRate">
 
                             <c:LineSeries.DataPointStyle>
@@ -148,7 +147,6 @@
                             <ColumnDefinition Width="Auto" />
                             <ColumnDefinition Width="*" />
                         </Grid.ColumnDefinitions>
-
 
                         <TextBlock x:Uid="HisDateFrom" Text="?" Grid.Row="0" Grid.Column="0"
                                    HorizontalAlignment="Left" VerticalAlignment="Center" />

@@ -26,7 +26,6 @@ namespace KursyWalut.Helper
             _pprogress.ReportProgress(0.00);
         }
 
-
         public void Dispose()
         {
         }

@@ -6,18 +6,18 @@ using System.Linq;
 using System.Threading.Tasks;
 using Cimbalino.Toolkit.Extensions;
 using KursyWalut.Cache;
-using KursyWalut.Helper;
+using KursyWalut.Extensions;
 using KursyWalut.Model;
 using KursyWalut.Progress;
 using KursyWalut.Provider;
 
 namespace KursyWalut.ProviderImpl
 {
-    public class StandardExchangeRateService : IExchangeRatesService, ICacheable
+    public class StandardErService : IErService, ICacheable
     {
-        private readonly IExchangeRatesProvider _exchangeRatesProvider;
+        private readonly IErProvider _exchangeRatesProvider;
 
-        public StandardExchangeRateService(IExchangeRatesProvider exchangeRatesProvider)
+        public StandardErService(IErProvider exchangeRatesProvider)
         {
             _exchangeRatesProvider = exchangeRatesProvider;
         }
@@ -27,7 +27,6 @@ namespace KursyWalut.ProviderImpl
             var initCache = (_exchangeRatesProvider as ICacheable)?.InitCache(p);
             if (initCache != null)
                 await initCache;
-
             p.ReportProgress(1.00);
         }
 
@@ -37,7 +36,6 @@ namespace KursyWalut.ProviderImpl
             var flushCache = (_exchangeRatesProvider as ICacheable)?.FlushCache(p);
             if (flushCache != null)
                 await flushCache;
-
             p.ReportProgress(1.00);
         }
 
@@ -46,37 +44,39 @@ namespace KursyWalut.ProviderImpl
             return await _exchangeRatesProvider.GetAvailableYears(p);
         }
 
-        public async Task<IList<DateTime>> GetAvailableDays(int year, IPProgress p)
+        public async Task<IList<DateTimeOffset>> GetAvailableDays(int year, IPProgress p)
         {
             return await _exchangeRatesProvider.GetAvailableDays(year, p);
         }
 
-        public async Task<IList<ExchangeRate>> GetExchangeRates(DateTime day, IPProgress p)
+        public async Task<IList<ExchangeRate>> GetExchangeRates(DateTimeOffset day, IPProgress p)
         {
             return await _exchangeRatesProvider.GetExchangeRates(day, p);
         }
 
-        public async Task<ExchangeRate> GetExchangeRate(Currency currency, DateTime day, IPProgress p)
+        public async Task<ExchangeRate> GetExchangeRate(Currency currency, DateTimeOffset day, IPProgress p)
         {
             var exchangeRates = await GetExchangeRates(day, p);
             return exchangeRates.FirstOrDefault(e => e.Currency.Equals(currency));
         }
 
-        public async Task<DateTime> GetFirstAvailableDay(IPProgress p)
+        public async Task<DateTimeOffset> GetFirstAvailableDay(IPProgress p)
         {
             var firstYear = (await GetAvailableYears(p.SubPercent(0.00, 0.40))).First();
             var firstDate = (await GetAvailableDays(firstYear, p.SubPercent(0.40, 1.00))).First();
+            p.ReportProgress(1.00);
             return firstDate;
         }
 
-        public async Task<DateTime> GetLastAvailableDay(IPProgress p)
+        public async Task<DateTimeOffset> GetLastAvailableDay(IPProgress p)
         {
             var lastYear = (await GetAvailableYears(p.SubPercent(0.00, 0.40))).Last();
             var lastDate = (await GetAvailableDays(lastYear, p.SubPercent(0.40, 1.00))).Last();
+            p.ReportProgress(1.00);
             return lastDate;
         }
 
-        public async Task<IList<DateTime>> GetAllAvailablesDay(IPProgress p)
+        public async Task<IList<DateTimeOffset>> GetAllAvailablesDay(IPProgress p)
         {
             var firstYear = (await GetAvailableYears(p.SubPercent(0.00, 0.05))).First();
             var lastYear = (await GetAvailableYears(p.SubPercent(0.05, 0.10))).Last();
@@ -86,8 +86,8 @@ namespace KursyWalut.ProviderImpl
         }
 
         public async Task GetExchangeRateAveragedHistory(
-            Currency currency, DateTime startDay, DateTime endDay,
-            ICollection<ExchangeRate> ers, int expectedSize, IPProgress p)
+            Currency currency, DateTimeOffset startDay, DateTimeOffset endDay,
+            ICollection<ExchangeRate> outErs, int expectedSize, IPProgress p)
         {
             if (startDay > endDay)
                 throw new ArgumentException("start.day > stop.day");
@@ -102,16 +102,15 @@ namespace KursyWalut.ProviderImpl
                 .Averaged(expectedSize)
                 .ToImmutableList();
 
-            await GetExchangeRatesInDays(properDays, currency, ers, p.SubPercent(0.20, 1.00));
-
+            await GetExchangeRatesInDays(properDays, currency, outErs, p.SubPercent(0.20, 1.00));
             p.ReportProgress(1.00);
         }
 
 
-        private async Task<IList<DateTime>> GetDaysBetweenYears(int startYear, int endYear, IPProgress p)
+        private async Task<IList<DateTimeOffset>> GetDaysBetweenYears(int startYear, int endYear, IPProgress p)
         {
             var years = Enumerable.Range(startYear, endYear - startYear + 1).ToImmutableList();
-            var work = new Task<IList<DateTime>>[years.Count];
+            var work = new Task<IList<DateTimeOffset>>[years.Count];
 
             for (var i = 0; i < years.Count; i++)
             {
@@ -121,14 +120,14 @@ namespace KursyWalut.ProviderImpl
             }
 
             var workDone = await Task.WhenAll(work);
-
             p.ReportProgress(1.00);
+
             return workDone.SelectMany(x => x).ToImmutableList();
         }
 
         private async Task GetExchangeRatesInDays(
-            IList<DateTime> days, Currency currency,
-            ICollection<ExchangeRate> ers, IPProgress p)
+            IList<DateTimeOffset> days, Currency currency,
+            ICollection<ExchangeRate> ourErs, IPProgress p)
         {
             var work = new List<Task<ExchangeRate>>();
             var waitFor = Environment.ProcessorCount*10;
@@ -137,22 +136,29 @@ namespace KursyWalut.ProviderImpl
             {
                 var day = days[i];
                 var progress = p.SubPart(i, days.Count);
+                var isCheckpoint = (i%waitFor == 0) || (i == days.Count - 1);
+
                 work.Add(GetExchangeRate(currency, day, progress));
 
-//                SpinWait.SpinUntil(() => work.Count(w => !w.IsCompleted) < waitFor);
-                if ((i%waitFor == 0) || (i == days.Count - 1))
+                if (isCheckpoint)
                 {
-                    var exchangeRates = await Task.WhenAll(work);
-                    var nonNullEr = exchangeRates.Where(c => c != null);
-                    ers.AddRange(nonNullEr);
-
+                    await AwaitDoneAndFill(work, ourErs);
                     work.Clear();
                     p.ReportProgress((i + 1.0)/days.Count);
                 }
-#if DEBUG
-                if (i%(days.Count/10) == 0) Debug.WriteLine("DL-{0}-{1}", days.Count, i);
-#endif
+
+                if ((days.Count > 10) && (i % (days.Count/10) == 0))
+                    Debug.WriteLine("DL-{0}-{1}", days.Count, i);
             }
+        }
+
+        private static async Task AwaitDoneAndFill<T>(
+            IEnumerable<Task<T>> work,
+            ICollection<T> @out)
+        {
+            var workT = await Task.WhenAll(work);
+            var nonNullT = workT.Where(c => !ReferenceEquals(c, null));
+            @out.AddRange(nonNullT);
         }
     }
 }

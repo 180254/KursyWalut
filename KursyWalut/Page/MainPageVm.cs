@@ -9,7 +9,7 @@ namespace KursyWalut.Page
     {
         private DateTimeOffset? _avgDate;
         private IList<ExchangeRate> _avgEr;
-        private IList<DateTime> _availDates;
+        private IList<DateTimeOffset> _availDates;
         private bool _avgActionEnabled;
 
         // ---------------------------------------------------------------------------------------------------------------
@@ -43,7 +43,7 @@ namespace KursyWalut.Page
             set { Set(() => AvgEr, ref _avgEr, value); }
         }
 
-        public IList<DateTime> AvailDates
+        public IList<DateTimeOffset> AvailDates
         {
             get { return _availDates; }
             set { Set(() => AvailDates, ref _availDates, value); }

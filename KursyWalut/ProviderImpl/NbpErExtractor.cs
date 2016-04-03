@@ -11,7 +11,7 @@ using KursyWalut.Model;
 
 namespace KursyWalut.ProviderImpl
 {
-    public class NbpExchangeRateExtractor : IDisposable
+    public class NbpErExtractor : IDisposable
     {
         private readonly HttpClient _client = new HttpClient();
 
@@ -30,15 +30,13 @@ namespace KursyWalut.ProviderImpl
 
         // ---------------------------------------------------------------------------------------------------------------
 
-        /// <exception cref="T:System.FormatException">httpResponse is in invalid format.</exception>
-        public IEnumerable<string> ParseFilenames(string httpResponse)
+        /// <exception cref="T:System.FormatException">response is in invalid format.</exception>
+        public IEnumerable<string> ParseFilenames(string response)
         {
-            var filenames = httpResponse.Split(new[] {'\n'}, StringSplitOptions.RemoveEmptyEntries);
+            var filenames = response.Split(new[] {'\n'}, StringSplitOptions.RemoveEmptyEntries);
 
             if (filenames.Length == 0)
-            {
                 throw new FormatException("empty response(pf)");
-            }
 
             return filenames;
         }
@@ -46,11 +44,11 @@ namespace KursyWalut.ProviderImpl
         // ---------------------------------------------------------------------------------------------------------------
 
         /// <exception cref="T:System.FormatException">filename is in invalid format.</exception>
-        public DateTime ParseDateTime(string filename)
+        public DateTimeOffset ParseDateTimeOffset(string filename)
         {
             try
             {
-                return DateTime.ParseExact(filename.Substring(5, 6), "yyMMdd", CultureInfo.InvariantCulture);
+                return DateTimeOffset.ParseExact(filename.Substring(5, 6), "yyMMdd", CultureInfo.InvariantCulture);
             }
             catch (ArgumentOutOfRangeException ex)
             {
@@ -61,7 +59,7 @@ namespace KursyWalut.ProviderImpl
         // ---------------------------------------------------------------------------------------------------------------
 
         /// <exception cref="T:System.FormatException">xContainer is in invalid format.</exception>
-        public IList<ExchangeRate> ParseExchangeRates(XContainer xC, DateTime day)
+        public IList<ExchangeRate> ParseExchangeRates(XContainer xC, DateTimeOffset day)
         {
             var exchangeRates = xC
                 .Descendants("tabela_kursow")
@@ -70,9 +68,7 @@ namespace KursyWalut.ProviderImpl
                 .ToImmutableList();
 
             if (exchangeRates.Count == 0)
-            {
                 throw new FormatException("empty response(per); xC = " + xC);
-            }
 
             return exchangeRates;
         }
@@ -80,11 +76,12 @@ namespace KursyWalut.ProviderImpl
         // ---------------------------------------------------------------------------------------------------------------
 
         /// <exception cref="T:System.FormatException">xContainer is in invalid format.</exception>
-        public ExchangeRate ParseExchangeRate(XContainer xC, DateTime day)
+        public ExchangeRate ParseExchangeRate(XContainer xC, DateTimeOffset day)
         {
             try
             {
                 var avarageRate = xC.Element("kurs_sredni").Value.Replace(',', '.');
+
                 return new ExchangeRate(
                     day,
                     ParseCurrency(xC),

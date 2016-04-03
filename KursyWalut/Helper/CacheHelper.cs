@@ -19,22 +19,22 @@ namespace KursyWalut.Helper
 
             // non-collection types
             ses.RegisterSerializer(new CurrencySerializer());
-            ses.RegisterSerializer(new DateTimeSerializer());
+            ses.RegisterSerializer(new DateTimeOffsetSerializer());
             ses.RegisterSerializer(new ExchangeRateSerializer(ses));
 
             // IList<int>
             ses.RegisterSerializer(new ListSerializer<int>(ses));
 
-            // IDictionary<int, IList<DateTime>> 
-            ses.RegisterSerializer(new ListSerializer<DateTime>(ses));
-            ses.RegisterSerializer(new DictionarySerializer<int, IList<DateTime>>(ses));
+            // IDictionary<int, IList<DateTimeOffset>> 
+            ses.RegisterSerializer(new ListSerializer<DateTimeOffset>(ses));
+            ses.RegisterSerializer(new DictionarySerializer<int, IList<DateTimeOffset>>(ses));
 
-            // IDictionary<DateTime, IList<ExchangeRate>>
+            // IDictionary<DateTimeOffset, IList<ExchangeRate>>
             ses.RegisterSerializer(new ListSerializer<ExchangeRate>(ses));
-            ses.RegisterSerializer(new DictionarySerializer<DateTime, IList<ExchangeRate>>(ses));
+            ses.RegisterSerializer(new DictionarySerializer<DateTimeOffset, IList<ExchangeRate>>(ses));
 
-            // IDictionary<DateTime, string>
-            ses.RegisterSerializer(new DictionarySerializer<DateTime, string>(ses));
+            // IDictionary<DateTimeOffset, string>
+            ses.RegisterSerializer(new DictionarySerializer<DateTimeOffset, string>(ses));
 
             return lsc;
         }

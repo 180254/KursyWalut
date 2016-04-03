@@ -42,8 +42,7 @@ namespace KursyWalut.Progress
 
         public IPProgress SubPart(int partIndex, int partCount)
         {
-            var percentPerPart = 1.0/partCount;
-            return SubPercent(partIndex*percentPerPart, (partIndex + 1)*percentPerPart);
+            return SubPercent(0, 1.0/partCount);
         }
 
         private void IncrementProgress(int incrValue)
@@ -57,11 +56,11 @@ namespace KursyWalut.Progress
         private void NotifyChange(int value)
         {
             var change = value - _lastNotified.Get();
-            var percentageChange = change/(1.0d*MaxValue);
-            var isMax = value == MaxValue;
+            var percentageChange = change/(double) MaxValue*100;
+            var isMaxNotNotified = (value == MaxValue) && (_lastNotified.Get() != value);
 
             // ReSharper disable once InvertIf
-            if ((percentageChange >= 0.01d) || isMax)
+            if ((percentageChange >= 1.00) || isMaxNotNotified)
             {
                 _lastNotified.Set(value);
                 ProgressChanged?.Invoke(this, value);
@@ -70,7 +69,7 @@ namespace KursyWalut.Progress
 
         private int ComputePercent(double percent)
         {
-            return (int) Math.Round(MaxValue*percent);
+            return (int) (MaxValue*percent);
         }
 
         public static IPProgress NewMaster()

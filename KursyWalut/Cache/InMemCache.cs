@@ -1,14 +1,14 @@
-﻿using System;
-using System.Collections.Concurrent;
+﻿using System.Collections.Concurrent;
 using System.Threading.Tasks;
 
 namespace KursyWalut.Cache
 {
+#pragma warning disable 1998 // Async function without await expression.
     public class InMemCache : ICache
     {
         private readonly ConcurrentDictionary<string, object> _dict = new ConcurrentDictionary<string, object>();
 
-        public async Task<T> Get<T>(string key, Func<T> default_)
+        public async Task<T> Get<T>(string key)
         {
             object value;
             if (_dict.TryGetValue(key, out value))
@@ -16,23 +16,24 @@ namespace KursyWalut.Cache
                 return (T) value;
             }
 
-            return await Task.Run(() => default_.Invoke());
+            return default(T);
         }
 
         public async Task Store<T>(string key, T value)
         {
-            await Task.Run(() => _dict.AddOrUpdate(key, value, (oldkey, oldvalue) => value));
+            _dict.AddOrUpdate(key, value, (oldkey, oldvalue) => value);
         }
 
         public async Task<bool> Remove(string key)
         {
             object ignored;
-            return await Task.Run(() => _dict.TryRemove(key, out ignored));
+            return _dict.TryRemove(key, out ignored);
         }
 
         public async Task Clear()
         {
-            await Task.Run(() => _dict.Clear());
+            _dict.Clear();
         }
     }
+#pragma warning restore 1998
 }
