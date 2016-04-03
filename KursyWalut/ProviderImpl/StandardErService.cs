@@ -27,6 +27,7 @@ namespace KursyWalut.ProviderImpl
             var initCache = (_exchangeRatesProvider as ICacheable)?.InitCache(p);
             if (initCache != null)
                 await initCache;
+
             p.ReportProgress(1.00);
         }
 
@@ -36,6 +37,7 @@ namespace KursyWalut.ProviderImpl
             var flushCache = (_exchangeRatesProvider as ICacheable)?.FlushCache(p);
             if (flushCache != null)
                 await flushCache;
+
             p.ReportProgress(1.00);
         }
 
@@ -147,7 +149,7 @@ namespace KursyWalut.ProviderImpl
                     p.ReportProgress((i + 1.0)/days.Count);
                 }
 
-                if ((days.Count > 10) && (i % (days.Count/10) == 0))
+                if ((days.Count > 10) && (i%(days.Count/10) == 0))
                     Debug.WriteLine("DL-{0}-{1}", days.Count, i);
             }
         }

@@ -1,7 +1,9 @@
 ﻿using System;
 using System.Collections.ObjectModel;
 using System.Diagnostics;
+using Windows.ApplicationModel.Resources;
 using Windows.UI.Core;
+using Windows.UI.Popups;
 using Windows.UI.Xaml;
 using Windows.UI.Xaml.Controls;
 using Windows.UI.Xaml.Input;
@@ -19,6 +21,7 @@ namespace KursyWalut.Page
     /// </summary>
     public sealed partial class MainPage
     {
+        private readonly ResourceLoader _res;
         private readonly EventHandler<int> _progressSubscriber;
         private readonly ProviderHelper _providerHelper;
         private object _historyPivotBackup;
@@ -37,6 +40,7 @@ namespace KursyWalut.Page
             _historyPivotBackup = MainPivot.Items?[1];
             MainPivot.Items?.RemoveAt(1);
 
+            _res = ResourceLoader.GetForCurrentView();
             SystemNavigationManager.GetForCurrentView().BackRequested += OnBackRequested;
         }
 
@@ -240,7 +244,13 @@ namespace KursyWalut.Page
 
             using (var h = new UiElementToPngHelper(HisChart, suggestedName, _progressSubscriber))
             {
-                await h.Execute();
+                var saved = await h.Execute();
+
+                if (saved)
+                {
+                    Vm.BottomAppBarIsOpen = false;
+                    await new MessageDialog(_res.GetString("HisSaveConfirmation/Text")).ShowAsync();
+                }
             }
 
             Vm.ChangesEnabled = true;

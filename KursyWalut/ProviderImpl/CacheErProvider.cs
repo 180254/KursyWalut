@@ -41,6 +41,7 @@ namespace KursyWalut.ProviderImpl
             var initCache = (_exchangeRatesProvider as ICacheable)?.InitCache(p.SubPercent(0.50, 1.00));
             if (initCache != null)
                 await initCache;
+
             p.ReportProgress(1.00);
         }
 
@@ -58,6 +59,7 @@ namespace KursyWalut.ProviderImpl
             var flushCache = (_exchangeRatesProvider as ICacheable)?.FlushCache(p.SubPercent(0.50, 1.00));
             if (flushCache != null)
                 await flushCache;
+
             p.ReportProgress(1.00);
         }
 

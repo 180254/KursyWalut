@@ -27,6 +27,7 @@ namespace KursyWalut.Page
 
         // ---------------------------------------------------------------------------------------------------------------
 
+        private bool _bottomAppBarIsOpen;
         private int _progress;
 
         // ---------------------------------------------------------------------------------------------------------------
@@ -118,6 +119,13 @@ namespace KursyWalut.Page
         public bool ChangesEnabled
         {
             set { AvgActionEnabled = HisActionEnabled = value; }
+        }
+
+
+        public bool BottomAppBarIsOpen
+        {
+            get { return _bottomAppBarIsOpen; }
+            set { Set(() => BottomAppBarIsOpen, ref _bottomAppBarIsOpen, value); }
         }
 
         // ---------------------------------------------------------------------------------------------------------------

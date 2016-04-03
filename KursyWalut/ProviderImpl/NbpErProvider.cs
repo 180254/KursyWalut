@@ -42,6 +42,7 @@ namespace KursyWalut.ProviderImpl
             _dayToFilename =
                 await _cache.Get<IDictionary<DateTimeOffset, string>>(nameof(_dayToFilename))
                 ?? new Dictionary<DateTimeOffset, string>();
+
             p.ReportProgress(1.00);
         }
 

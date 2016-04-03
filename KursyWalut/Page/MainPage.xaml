@@ -16,7 +16,7 @@
     </Page.Resources>
 
     <Page.BottomAppBar>
-        <AppBar IsOpen="False" IsSticky="True">
+        <AppBar IsOpen="{Binding BottomAppBarIsOpen, Mode=TwoWay}" IsSticky="True">
             <Grid Margin="2,2,2,2">
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="*" />

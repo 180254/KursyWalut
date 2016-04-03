@@ -135,4 +135,7 @@
   <data name="HisSaveButton.Label" xml:space="preserve">
     <value>Zapisz wykres</value>
   </data>
+  <data name="HisSaveConfirmation.Text" xml:space="preserve">
+    <value>Zapisano wykres</value>
+  </data>
 </root>

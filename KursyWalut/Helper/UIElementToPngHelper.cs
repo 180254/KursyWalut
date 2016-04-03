@@ -30,7 +30,7 @@ namespace KursyWalut.Helper
         {
         }
 
-        public async Task Execute()
+        public async Task<bool> Execute()
         {
             // select file
             var savePicker = new FileSavePicker
@@ -73,6 +73,7 @@ namespace KursyWalut.Helper
             }
 
             _pprogress.ReportProgress(1.00);
+            return file != null;
         }
     }
 }
