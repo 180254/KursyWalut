@@ -137,8 +137,8 @@ namespace KursyWalut.Page
             // ReSharper disable once InvertIf
             if ((e.NewDate != null) && Vm.AvgActionEnabled)
             {
-                AvgReload(e.NewDate.Value);
-                Vm.AvgDate = e.NewDate.Value;
+                AvgReload(e.NewDate.Value.Date);
+                Vm.AvgDate = e.NewDate.Value.Date;
             }
         }
 
@@ -197,7 +197,7 @@ namespace KursyWalut.Page
 
                 var ers = new ObservableCollection<ExchangeRate>();
                 await h.ErService.GetExchangeRateAveragedHistory(
-                    Vm.HisCurrency, Vm.HisDateFrom.Value, Vm.HisDateTo.Value,
+                    Vm.HisCurrency, Vm.HisDateFrom.Value.Date, Vm.HisDateTo.Value.Date,
                     ers, (int) (HisChart.ActualWidth*1.05), h.Progress);
 
                 Vm.HisEr = ers;
@@ -219,7 +219,7 @@ namespace KursyWalut.Page
         {
             if (e.NewDate != null)
             {
-                Vm.HisDateFrom = e.NewDate.Value;
+                Vm.HisDateFrom = e.NewDate.Value.Date;
             }
         }
 
@@ -229,7 +229,7 @@ namespace KursyWalut.Page
         {
             if (e.NewDate != null)
             {
-                Vm.HisDateTo = e.NewDate.Value;
+                Vm.HisDateTo = e.NewDate.Value.Date;
             }
         }
 
