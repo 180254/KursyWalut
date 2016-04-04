@@ -1,5 +1,5 @@
 ﻿using System;
-using System.Collections.ObjectModel;
+using System.Collections.Generic;
 using System.Diagnostics;
 using Windows.ApplicationModel.Resources;
 using Windows.UI.Core;
@@ -32,6 +32,7 @@ namespace KursyWalut.Page
             Vm = new MainPageVm();
             InitializeComponent();
 
+            // initialize provider helper
             var cache = CacheHelper.GetStandardLsc();
             _progressSubscriber = (sender, i) => Vm.Progress = i;
             _providerHelper = new ProviderHelper(cache, _progressSubscriber);
@@ -42,7 +43,7 @@ namespace KursyWalut.Page
 
             _res = ResourceLoader.GetForCurrentView();
             SystemNavigationManager.GetForCurrentView().BackRequested += OnBackRequested;
-            Application.Current.UnhandledException += CurrentOnUnhandledException;
+            Application.Current.UnhandledException += OnUnhandledException;
         }
 
         public MainPageVm Vm { get; }
@@ -76,7 +77,7 @@ namespace KursyWalut.Page
                 Vm.HisDateFrom = lastAvailableDay.AddYears(-1);
                 Vm.HisDateTo = lastAvailableDay;
                 Vm.HisDateToMax = lastAvailableDay;
-                Vm.HisDatesBackup();
+
                 var erProgress = h.Progress.SubPercent(0.10, 0.50);
                 Vm.AvgErList = await h.ErService.GetExchangeRates(lastAvailableDay, erProgress);
 
@@ -114,6 +115,7 @@ namespace KursyWalut.Page
 
             Vm.ChangesEnabled = true;
             Vm.AllDatesBackup();
+
 #if DEBUG
             DebugElapsedTime(sw, nameof(AvgReload));
 #endif
@@ -125,7 +127,7 @@ namespace KursyWalut.Page
             CalendarView sender,
             CalendarViewDayItemChangingEventArgs e)
         {
-            if ((e.Item != null) && !Vm.AvailDates.Contains(e.Item.Date.DateTime.Date))
+            if ((e.Item != null) && !Vm.AvailDates.Contains(e.Item.Date.Date))
             {
                 e.Item.IsBlackout = true;
             }
@@ -140,8 +142,8 @@ namespace KursyWalut.Page
             // ReSharper disable once InvertIf
             if ((e.NewDate != null) && Vm.AvgActionEnabled)
             {
-                AvgReload(e.NewDate.Value.Date);
                 Vm.AvgDate = e.NewDate.Value.Date;
+                AvgReload(e.NewDate.Value.Date);
             }
         }
 
@@ -149,12 +151,14 @@ namespace KursyWalut.Page
 
         private void AvgList_OnTapped(object sender, TappedRoutedEventArgs e)
         {
-            var listView = sender as ListView;
-            var selectedItem = listView?.SelectedItem as ExchangeRate;
+            var selectedItem = AvgList.SelectedItem as ExchangeRate;
             if (selectedItem == null) return;
 
-            if (!Equals(Vm.HisCurrency, selectedItem.Currency)
-                && (_historyPivotBackup == null))
+            var newCurrencySelected =
+                !Equals(Vm.HisCurrency, selectedItem.Currency)
+                && (_historyPivotBackup == null);
+
+            if (newCurrencySelected)
             {
                 _historyDrawn = false;
                 Vm.HisErList = null;
@@ -162,7 +166,7 @@ namespace KursyWalut.Page
                 // remove whole chart, and be empty space again - render hack
                 var series = HisChart.Series[0];
                 (series as LineSeries)?.Points?.Clear();
-                HisChart.Series.RemoveAt(0);
+                HisChart.Series.Remove(series);
                 HisChart.Series.Add(series);
             }
 
@@ -174,8 +178,8 @@ namespace KursyWalut.Page
             }
 
             Vm.HisCurrency = selectedItem.Currency;
-            MainPivot.SelectedIndex = 1;
-            listView.SelectedValue = null;
+            MainPivot.SelectedIndex = 1; // change pivot to history
+            AvgList.SelectedValue = null;
         }
 
         // ---------------------------------------------------------------------------------------------------------------
@@ -185,34 +189,38 @@ namespace KursyWalut.Page
 #if DEBUG
             var sw = Stopwatch.StartNew();
 #endif
-            Vm.ChangesEnabled = false;
 
             if ((Vm.HisDateFrom == null) || (Vm.HisDateTo == null))
             {
                 return;
             }
 
+            Vm.ChangesEnabled = false;
+
             using (var h = _providerHelper.Helper())
             {
                 await h.InitCache();
 
-                var ers = new ObservableCollection<ExchangeRate>();
+                var ers = new List<ExchangeRate>();
                 await h.ErService.GetExchangeRateAveragedHistory(
                     Vm.HisCurrency, Vm.HisDateFrom.Value, Vm.HisDateTo.Value,
-                    ers, (int) (HisChart.ActualWidth*1.05), h.Progress);
-
+                    ers, (int) (HisChart.ActualWidth*1.1), h.Progress);
                 Vm.HisErList = ers;
+
                 await h.FlushCache();
             }
 
-            Vm.ChangesEnabled = true;
             _historyDrawn = true;
+            Vm.ChangesEnabled = true;
             Vm.HisSaveEnabled = true;
             Vm.AllDatesBackup();
+
 #if DEBUG
             DebugElapsedTime(sw, nameof(HisDraw_OnClick));
 #endif
         }
+
+        // ---------------------------------------------------------------------------------------------------------------
 
         private void HisDateFromPicker_OnDateChanged(
             CalendarDatePicker sender,
@@ -224,6 +232,8 @@ namespace KursyWalut.Page
             }
         }
 
+        // ---------------------------------------------------------------------------------------------------------------
+
         private void HitDateToPicker_OnDateChanged(
             CalendarDatePicker sender,
             CalendarDatePickerDateChangedEventArgs e)
@@ -234,14 +244,16 @@ namespace KursyWalut.Page
             }
         }
 
+        // ---------------------------------------------------------------------------------------------------------------
+
         private async void HisSaveButton_OnClick(object sender, RoutedEventArgs e)
         {
-            Vm.ChangesEnabled = false;
-
             var suggestedName = string.Format("{0}_{1}-{2}",
                 Vm.HisCurrency.Code,
                 Vm.HisDateFrom?.ToString("ddMMyy") ?? "?",
                 Vm.HisDateTo?.ToString("ddMMyy") ?? "?");
+
+            Vm.ChangesEnabled = false;
 
             using (var h = new UiElementToPngHelper(HisChart, suggestedName, _progressSubscriber))
             {
@@ -261,38 +273,53 @@ namespace KursyWalut.Page
 
         private void MainPivot_OnSelectionChanged(object sender, SelectionChangedEventArgs e)
         {
-            Vm.HisSaveEnabled = (MainPivot.SelectedIndex == 1) && _historyDrawn;
+            var historyPivotSelected = MainPivot.SelectedIndex == 1;
+            Vm.HisSaveEnabled = historyPivotSelected && _historyDrawn;
         }
+
+        // ---------------------------------------------------------------------------------------------------------------
 
         private void OnBackRequested(object s, BackRequestedEventArgs e)
         {
+            // don't handle avg pivot - default action (close)
             e.Handled = MainPivot.SelectedIndex > 0;
 
             // ReSharper disable once InvertIf
-            if (MainPivot.SelectedIndex > 0)
+            if (e.Handled)
             {
+                // change pivot from history to avg
                 MainPivot.SelectedIndex = MainPivot.SelectedIndex - 1;
                 Vm.HisDatesRecover();
             }
         }
 
+        // ---------------------------------------------------------------------------------------------------------------
 
-        private async void CurrentOnUnhandledException(object sender, UnhandledExceptionEventArgs e)
+        private async void OnUnhandledException(object sender, UnhandledExceptionEventArgs e)
         {
             e.Handled = true;
             Vm.Progress = 0;
             await new MessageDialog(_res.GetString("NoInternet/Text")).ShowAsync();
 
             AvgList.SelectedItem = null;
-            if (Vm.AvailDates == null)
-                Vm.InitDone = false;
-            else
-                Vm.ChangesEnabled = true;
-            Vm.AllDatesRecover();
 
-      
+            if (!Vm.InitDoneSet)
+            {
+                Vm.InitDone = false;
+            }
+            else
+            {
+                Vm.ChangesEnabled = true;
+                Vm.AllDatesRecover();
+            }
         }
 
+        // ---------------------------------------------------------------------------------------------------------------
+
+        private void AvgRetryInitButton_OnClick(object sender, RoutedEventArgs e)
+        {
+            AvgInit();
+        }
 
         // ---------------------------------------------------------------------------------------------------------------
 

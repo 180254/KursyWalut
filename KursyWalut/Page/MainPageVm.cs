@@ -13,7 +13,7 @@ namespace KursyWalut.Page
         private IList<DateTimeOffset> _availDates;
         private bool _avgActionEnabled;
         private Visibility _avgCalendarVisible = Visibility.Collapsed;
-        private Visibility _avgInitButtonVisible = Visibility.Collapsed;
+        private Visibility _avgRetryInitButtonVisible = Visibility.Collapsed;
 
         // ---------------------------------------------------------------------------------------------------------------
 
@@ -65,10 +65,10 @@ namespace KursyWalut.Page
             set { Set(() => AvgCalendarVisible, ref _avgCalendarVisible, value); }
         }
 
-        public Visibility AvgInitButtonVisible
+        public Visibility AvgRetryInitButtonVisible
         {
-            get { return _avgInitButtonVisible; }
-            set { Set(() => AvgInitButtonVisible, ref _avgInitButtonVisible, value); }
+            get { return _avgRetryInitButtonVisible; }
+            set { Set(() => AvgRetryInitButtonVisible, ref _avgRetryInitButtonVisible, value); }
         }
 
         // ---------------------------------------------------------------------------------------------------------------
@@ -131,15 +131,15 @@ namespace KursyWalut.Page
             set { Set(() => Progress, ref _progress, value); }
         }
 
-        public bool ChangesEnabled
-        {
-            set { AvgActionEnabled = HisActionEnabled = value; }
-        }
-
         public bool BottomAppBarIsOpen
         {
             get { return _bottomAppBarIsOpen; }
             set { Set(() => BottomAppBarIsOpen, ref _bottomAppBarIsOpen, value); }
+        }
+
+        public bool ChangesEnabled
+        {
+            set { AvgActionEnabled = HisActionEnabled = value; }
         }
 
         public bool InitDone
@@ -147,9 +147,11 @@ namespace KursyWalut.Page
             set
             {
                 AvgCalendarVisible = value ? Visibility.Visible : Visibility.Collapsed;
-                AvgInitButtonVisible = !value ? Visibility.Visible : Visibility.Collapsed;
+                AvgRetryInitButtonVisible = !value ? Visibility.Visible : Visibility.Collapsed;
             }
         }
+
+        public bool InitDoneSet => !AvgCalendarVisible.Equals(AvgRetryInitButtonVisible);
 
         // ---------------------------------------------------------------------------------------------------------------
 
