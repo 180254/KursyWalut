@@ -202,10 +202,14 @@ namespace KursyWalut.Page
                 await h.InitCache();
 
                 var ers = new List<ExchangeRate>();
+                var expectedSize = (int) (HisChart.ActualWidth*1.05);
                 await h.ErService.GetExchangeRateAveragedHistory(
                     Vm.HisCurrency, Vm.HisDateFrom.Value, Vm.HisDateTo.Value,
-                    ers, (int) (HisChart.ActualWidth*1.1), h.Progress);
+                    ers, expectedSize, h.Progress);
                 Vm.HisErList = ers;
+
+                Debug.WriteLine("{0}-width={1};expectedSize={2};gotSize={3}",
+                    nameof(HisDraw_OnClick), (int) HisChart.ActualWidth, expectedSize, ers.Count);
 
                 await h.FlushCache();
             }
