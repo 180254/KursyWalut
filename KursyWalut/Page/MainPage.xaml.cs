@@ -42,6 +42,7 @@ namespace KursyWalut.Page
 
             _res = ResourceLoader.GetForCurrentView();
             SystemNavigationManager.GetForCurrentView().BackRequested += OnBackRequested;
+            Application.Current.UnhandledException += CurrentOnUnhandledException;
         }
 
         public MainPageVm Vm { get; }
@@ -75,10 +76,9 @@ namespace KursyWalut.Page
                 Vm.HisDateFrom = lastAvailableDay.AddYears(-1);
                 Vm.HisDateTo = lastAvailableDay;
                 Vm.HisDateToMax = lastAvailableDay;
-                Vm.HisDateBackup();
-
+                Vm.HisDatesBackup();
                 var erProgress = h.Progress.SubPercent(0.10, 0.50);
-                Vm.AvgEr = await h.ErService.GetExchangeRates(lastAvailableDay, erProgress);
+                Vm.AvgErList = await h.ErService.GetExchangeRates(lastAvailableDay, erProgress);
 
                 var availProgress = h.Progress.SubPercent(0.50, 1.00);
                 Vm.AvailDates = await h.ErService.GetAllAvailablesDay(availProgress);
@@ -86,7 +86,9 @@ namespace KursyWalut.Page
                 await h.FlushCache();
             }
 
+            Vm.InitDone = true;
             Vm.ChangesEnabled = true;
+            Vm.AllDatesBackup();
 
 #if DEBUG
             DebugElapsedTime(sw, nameof(AvgInit));
@@ -106,11 +108,12 @@ namespace KursyWalut.Page
             using (var h = _providerHelper.Helper())
             {
                 await h.InitCache();
-                Vm.AvgEr = await h.ErService.GetExchangeRates(date, h.Progress);
+                Vm.AvgErList = await h.ErService.GetExchangeRates(date, h.Progress);
                 await h.FlushCache();
             }
 
             Vm.ChangesEnabled = true;
+            Vm.AllDatesBackup();
 #if DEBUG
             DebugElapsedTime(sw, nameof(AvgReload));
 #endif
@@ -154,7 +157,7 @@ namespace KursyWalut.Page
                 && (_historyPivotBackup == null))
             {
                 _historyDrawn = false;
-                Vm.HisEr = null;
+                Vm.HisErList = null;
 
                 // remove whole chart, and be empty space again - render hack
                 var series = HisChart.Series[0];
@@ -170,7 +173,6 @@ namespace KursyWalut.Page
                 _historyPivotBackup = null;
             }
 
-
             Vm.HisCurrency = selectedItem.Currency;
             MainPivot.SelectedIndex = 1;
             listView.SelectedValue = null;
@@ -184,7 +186,6 @@ namespace KursyWalut.Page
             var sw = Stopwatch.StartNew();
 #endif
             Vm.ChangesEnabled = false;
-            Vm.HisDateBackup();
 
             if ((Vm.HisDateFrom == null) || (Vm.HisDateTo == null))
             {
@@ -197,17 +198,17 @@ namespace KursyWalut.Page
 
                 var ers = new ObservableCollection<ExchangeRate>();
                 await h.ErService.GetExchangeRateAveragedHistory(
-                    Vm.HisCurrency, Vm.HisDateFrom.Value.Date, Vm.HisDateTo.Value.Date,
+                    Vm.HisCurrency, Vm.HisDateFrom.Value, Vm.HisDateTo.Value,
                     ers, (int) (HisChart.ActualWidth*1.05), h.Progress);
 
-                Vm.HisEr = ers;
+                Vm.HisErList = ers;
                 await h.FlushCache();
             }
 
             Vm.ChangesEnabled = true;
             _historyDrawn = true;
             Vm.HisSaveEnabled = true;
-
+            Vm.AllDatesBackup();
 #if DEBUG
             DebugElapsedTime(sw, nameof(HisDraw_OnClick));
 #endif
@@ -271,9 +272,27 @@ namespace KursyWalut.Page
             if (MainPivot.SelectedIndex > 0)
             {
                 MainPivot.SelectedIndex = MainPivot.SelectedIndex - 1;
-                Vm.HisDateRecover();
+                Vm.HisDatesRecover();
             }
         }
+
+
+        private async void CurrentOnUnhandledException(object sender, UnhandledExceptionEventArgs e)
+        {
+            e.Handled = true;
+            Vm.Progress = 0;
+            await new MessageDialog(_res.GetString("NoInternet/Text")).ShowAsync();
+
+            AvgList.SelectedItem = null;
+            if (Vm.AvailDates == null)
+                Vm.InitDone = false;
+            else
+                Vm.ChangesEnabled = true;
+            Vm.AllDatesRecover();
+
+      
+        }
+
 
         // ---------------------------------------------------------------------------------------------------------------
 

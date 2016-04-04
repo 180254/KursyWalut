@@ -138,4 +138,10 @@
   <data name="HisSaveConfirmation.Text" xml:space="preserve">
     <value>Zapisano wykres</value>
   </data>
+  <data name="NoInternet.Text" xml:space="preserve">
+    <value>Wystąpił problem podczas przetwarzania. Sprawdź dostępność połączenia internetowego. Być może serwis NBP nie jest osiągalny. Proszę spróbować później.</value>
+  </data>
+  <data name="NoInternetButton.Text" xml:space="preserve">
+    <value>Ponów wczytywanie</value>
+  </data>
 </root>

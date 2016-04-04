@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using Windows.UI.Xaml;
 using GalaSoft.MvvmLight;
 using KursyWalut.Model;
 
@@ -8,19 +9,21 @@ namespace KursyWalut.Page
     public class MainPageVm : ViewModelBase
     {
         private DateTimeOffset? _avgDate;
-        private IList<ExchangeRate> _avgEr;
+        private IList<ExchangeRate> _avgErList;
         private IList<DateTimeOffset> _availDates;
         private bool _avgActionEnabled;
+        private Visibility _avgCalendarVisible = Visibility.Collapsed;
+        private Visibility _avgInitButtonVisible = Visibility.Collapsed;
 
         // ---------------------------------------------------------------------------------------------------------------
 
         private Currency _hisCurrency;
         private DateTimeOffset? _hisDateFrom;
         private DateTimeOffset? _hisDateTo;
-        private readonly DateTimeOffset?[] _hisDateBackups = new DateTimeOffset?[2];
+        private readonly DateTimeOffset?[] _dateBackups = new DateTimeOffset?[3];
         private DateTimeOffset _hisDateFromMin;
         private DateTimeOffset _hisDateToMax;
-        private IList<ExchangeRate> _hisEr;
+        private IList<ExchangeRate> _hisErList;
         private bool _hisActionEnabled;
         private bool _hisSaveEnabled;
 
@@ -38,10 +41,10 @@ namespace KursyWalut.Page
             set { Set(() => AvgDate, ref _avgDate, value); }
         }
 
-        public IList<ExchangeRate> AvgEr
+        public IList<ExchangeRate> AvgErList
         {
-            get { return _avgEr; }
-            set { Set(() => AvgEr, ref _avgEr, value); }
+            get { return _avgErList; }
+            set { Set(() => AvgErList, ref _avgErList, value); }
         }
 
         public IList<DateTimeOffset> AvailDates
@@ -54,6 +57,18 @@ namespace KursyWalut.Page
         {
             get { return _avgActionEnabled; }
             set { Set(() => AvgActionEnabled, ref _avgActionEnabled, value); }
+        }
+
+        public Visibility AvgCalendarVisible
+        {
+            get { return _avgCalendarVisible; }
+            set { Set(() => AvgCalendarVisible, ref _avgCalendarVisible, value); }
+        }
+
+        public Visibility AvgInitButtonVisible
+        {
+            get { return _avgInitButtonVisible; }
+            set { Set(() => AvgInitButtonVisible, ref _avgInitButtonVisible, value); }
         }
 
         // ---------------------------------------------------------------------------------------------------------------
@@ -89,10 +104,10 @@ namespace KursyWalut.Page
             set { Set(() => HisDateToMax, ref _hisDateToMax, value); }
         }
 
-        public IList<ExchangeRate> HisEr
+        public IList<ExchangeRate> HisErList
         {
-            get { return _hisEr; }
-            set { Set(() => HisEr, ref _hisEr, value); }
+            get { return _hisErList; }
+            set { Set(() => HisErList, ref _hisErList, value); }
         }
 
         public bool HisActionEnabled
@@ -121,25 +136,45 @@ namespace KursyWalut.Page
             set { AvgActionEnabled = HisActionEnabled = value; }
         }
 
-
         public bool BottomAppBarIsOpen
         {
             get { return _bottomAppBarIsOpen; }
             set { Set(() => BottomAppBarIsOpen, ref _bottomAppBarIsOpen, value); }
         }
 
-        // ---------------------------------------------------------------------------------------------------------------
-
-        public void HisDateBackup()
+        public bool InitDone
         {
-            _hisDateBackups[0] = HisDateFrom;
-            _hisDateBackups[1] = HisDateTo;
+            set
+            {
+                AvgCalendarVisible = value ? Visibility.Visible : Visibility.Collapsed;
+                AvgInitButtonVisible = !value ? Visibility.Visible : Visibility.Collapsed;
+            }
         }
 
-        public void HisDateRecover()
+        // ---------------------------------------------------------------------------------------------------------------
+
+        public void HisDatesBackup()
         {
-            HisDateFrom = _hisDateBackups[0];
-            HisDateTo = _hisDateBackups[1];
+            _dateBackups[1] = HisDateFrom;
+            _dateBackups[2] = HisDateTo;
+        }
+
+        public void HisDatesRecover()
+        {
+            _dateBackups[1] = HisDateFrom;
+            _dateBackups[2] = HisDateTo;
+        }
+
+        public void AllDatesBackup()
+        {
+            _dateBackups[0] = AvgDate;
+            HisDatesBackup();
+        }
+
+        public void AllDatesRecover()
+        {
+            AvgDate = _dateBackups[0];
+            HisDatesRecover();
         }
     }
 }
