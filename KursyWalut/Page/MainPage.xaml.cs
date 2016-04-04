@@ -143,7 +143,11 @@ namespace KursyWalut.Page
             if ((e.NewDate != null) && Vm.AvgActionEnabled)
             {
                 Vm.AvgDate = e.NewDate.Value.Date;
-                AvgReload(e.NewDate.Value.Date);
+
+                if (e.NewDate?.Date != e.OldDate?.Date)
+                {
+                    AvgReload(e.NewDate.Value.Date);
+                }
             }
         }
 
