@@ -35,7 +35,7 @@
 
             <PivotItem>
                 <PivotItem.Header>
-                    <TextBlock Foreground="#D1B280">
+                    <TextBlock Foreground="{Binding PivotForegrounds[0]}">
                         <Run x:Uid="AvgPivotHeader" Text="?" />
                     </TextBlock>
                 </PivotItem.Header>
@@ -95,7 +95,7 @@
 
             <PivotItem>
                 <PivotItem.Header>
-                    <TextBlock Foreground="#D1B280">
+                    <TextBlock Foreground="{Binding PivotForegrounds[1]}">
                         <Run x:Uid="HisPivotHeader" Text="?" /><Run Text=" " />
                         <Run Text="{Binding HisCurrency.Code}" />
                     </TextBlock>

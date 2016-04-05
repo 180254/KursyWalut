@@ -208,7 +208,7 @@ namespace KursyWalut.Page
                 await h.InitCache();
 
                 var ers = new List<ExchangeRate>();
-              
+
                 var expectedSize = (int) (HisChart.ActualWidth* _scaleFactor);
                 await h.ErService.GetExchangeRateAveragedHistory(
                     Vm.HisCurrency, Vm.HisDateFrom.Value, Vm.HisDateTo.Value,
@@ -286,6 +286,8 @@ namespace KursyWalut.Page
         {
             var historyPivotSelected = MainPivot.SelectedIndex == 1;
             Vm.HisSaveEnabled = historyPivotSelected && _historyDrawn;
+
+            Vm.RotatePivotForegrounds();
         }
 
         // ---------------------------------------------------------------------------------------------------------------

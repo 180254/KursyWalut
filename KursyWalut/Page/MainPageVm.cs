@@ -1,6 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
+using Windows.UI;
 using Windows.UI.Xaml;
+using Windows.UI.Xaml.Media;
 using GalaSoft.MvvmLight;
 using KursyWalut.Model;
 
@@ -29,6 +32,12 @@ namespace KursyWalut.Page
 
 
         // ---------------------------------------------------------------------------------------------------------------
+
+        private IList<Brush> _pivotForegrounds = new List<Brush>
+        {
+            GetSolidColorBrush("#FF6C4A15"),
+            GetSolidColorBrush("#FFD1B280")
+        };
 
         private bool _bottomAppBarIsOpen;
         private int _progress;
@@ -125,16 +134,22 @@ namespace KursyWalut.Page
 
         // ---------------------------------------------------------------------------------------------------------------
 
-        public int Progress
+        public IList<Brush> PivotForegrounds
         {
-            get { return _progress; }
-            set { Set(() => Progress, ref _progress, value); }
+            get { return _pivotForegrounds; }
+            set { Set(() => PivotForegrounds, ref _pivotForegrounds, value); }
         }
 
         public bool BottomAppBarIsOpen
         {
             get { return _bottomAppBarIsOpen; }
             set { Set(() => BottomAppBarIsOpen, ref _bottomAppBarIsOpen, value); }
+        }
+
+        public int Progress
+        {
+            get { return _progress; }
+            set { Set(() => Progress, ref _progress, value); }
         }
 
         public bool ChangesEnabled
@@ -149,6 +164,11 @@ namespace KursyWalut.Page
                 AvgCalendarVisible = value ? Visibility.Visible : Visibility.Collapsed;
                 AvgRetryInitButtonVisible = !value ? Visibility.Visible : Visibility.Collapsed;
             }
+        }
+
+        public void RotatePivotForegrounds()
+        {
+            PivotForegrounds = Rotate(PivotForegrounds);
         }
 
         // ---------------------------------------------------------------------------------------------------------------
@@ -175,6 +195,31 @@ namespace KursyWalut.Page
         {
             AvgDate = _dateBackups[0];
             HisDatesRecover();
+        }
+
+        // ---------------------------------------------------------------------------------------------------------------
+
+        // 07 March 2016 Joel Joseph www.joeljoseph.ne
+        // http://www.joeljoseph.net/converting-hex-to-color-in-universal-windows-platform-uwp/
+        private static Brush GetSolidColorBrush(string hex)
+        {
+            hex = hex.Replace("#", string.Empty);
+            var a = (byte) Convert.ToUInt32(hex.Substring(0, 2), 16);
+            var r = (byte) Convert.ToUInt32(hex.Substring(2, 2), 16);
+            var g = (byte) Convert.ToUInt32(hex.Substring(4, 2), 16);
+            var b = (byte) Convert.ToUInt32(hex.Substring(6, 2), 16);
+            return new SolidColorBrush(Color.FromArgb(a, r, g, b));
+        }
+
+        private static List<T> Rotate<T>(IEnumerable<T> source)
+        {
+            var copy = source.ToList();
+
+            var first = copy[0];
+            copy.RemoveAt(0);
+            copy.Add(first);
+
+            return copy;
         }
     }
 }

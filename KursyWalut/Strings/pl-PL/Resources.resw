@@ -133,7 +133,7 @@
     <value>Historia kursu</value>
   </data>
   <data name="HisSaveButton.Label" xml:space="preserve">
-    <value>Zapisz wykres</value>
+    <value>Zapisz wykres do pliku</value>
   </data>
   <data name="HisSaveConfirmation.Text" xml:space="preserve">
     <value>Zapisano wykres</value>
