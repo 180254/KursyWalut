@@ -164,6 +164,7 @@
                                             Date="{Binding Path=HisDateFrom, Mode=TwoWay}"
                                             DateChanged="HisDateFromPicker_OnDateChanged"
                                             MinDate="{Binding Path=HisDateFromMin, Mode=TwoWay}"
+                                            MaxDate="{Binding Path=HisDateToMax, Mode=TwoWay}"
                                             IsEnabled="{Binding HisActionEnabled}" />
 
                         <CalendarDatePicker Grid.Row="1" Grid.Column="1" Margin="5,0,0,0" HorizontalAlignment="Stretch"

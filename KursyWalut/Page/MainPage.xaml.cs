@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Diagnostics;
 using Windows.ApplicationModel.Resources;
+using Windows.Graphics.Display;
 using Windows.UI.Core;
 using Windows.UI.Popups;
 using Windows.UI.Xaml;
@@ -22,6 +23,7 @@ namespace KursyWalut.Page
     public sealed partial class MainPage
     {
         private readonly ResourceLoader _res;
+        private readonly double _scaleFactor;
         private readonly EventHandler<int> _progressSubscriber;
         private readonly ProviderHelper _providerHelper;
         private object _historyPivotBackup;
@@ -42,6 +44,7 @@ namespace KursyWalut.Page
             MainPivot.Items?.RemoveAt(1);
 
             _res = ResourceLoader.GetForCurrentView();
+            _scaleFactor = DisplayInformation.GetForCurrentView().RawPixelsPerViewPixel;
             SystemNavigationManager.GetForCurrentView().BackRequested += OnBackRequested;
             Application.Current.UnhandledException += OnUnhandledException;
         }
@@ -87,7 +90,6 @@ namespace KursyWalut.Page
                 await h.FlushCache();
             }
 
-            Vm.InitDone = true;
             Vm.ChangesEnabled = true;
             Vm.AllDatesBackup();
 
@@ -206,7 +208,8 @@ namespace KursyWalut.Page
                 await h.InitCache();
 
                 var ers = new List<ExchangeRate>();
-                var expectedSize = (int) (HisChart.ActualWidth*1.05);
+              
+                var expectedSize = (int) (HisChart.ActualWidth* _scaleFactor);
                 await h.ErService.GetExchangeRateAveragedHistory(
                     Vm.HisCurrency, Vm.HisDateFrom.Value, Vm.HisDateTo.Value,
                     ers, expectedSize, h.Progress);
@@ -234,7 +237,7 @@ namespace KursyWalut.Page
             CalendarDatePicker sender,
             CalendarDatePickerDateChangedEventArgs e)
         {
-            if (e.NewDate != null)
+            if ((e.NewDate != null) && (e.NewDate?.Date != e.OldDate?.Date))
             {
                 Vm.HisDateFrom = e.NewDate.Value.Date;
             }
@@ -246,7 +249,7 @@ namespace KursyWalut.Page
             CalendarDatePicker sender,
             CalendarDatePickerDateChangedEventArgs e)
         {
-            if (e.NewDate != null)
+            if ((e.NewDate != null) && (e.NewDate?.Date != e.OldDate?.Date))
             {
                 Vm.HisDateTo = e.NewDate.Value.Date;
             }
@@ -311,7 +314,8 @@ namespace KursyWalut.Page
 
             AvgList.SelectedItem = null;
 
-            if (!Vm.InitDoneSet)
+            var initSuccessfully = Vm.AvailDates != null;
+            if (!initSuccessfully)
             {
                 Vm.InitDone = false;
             }

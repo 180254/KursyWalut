@@ -12,7 +12,7 @@ namespace KursyWalut.Extensions
             var dataArray = data as T[] ?? data.ToArray();
             if (dataArray.Length <= expectedSize) return dataArray;
 
-            var incr = (int) Math.Floor(dataArray.Length/(double) expectedSize);
+            var incr = (int) Math.Round(dataArray.Length/(double) expectedSize);
             var nextSize = (int) Math.Floor(dataArray.Length/(double) incr);
 
             var indexes = Enumerable.Range(0, nextSize)

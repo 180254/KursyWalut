@@ -12,7 +12,7 @@ namespace KursyWalut.Page
         private IList<ExchangeRate> _avgErList;
         private IList<DateTimeOffset> _availDates;
         private bool _avgActionEnabled;
-        private Visibility _avgCalendarVisible = Visibility.Collapsed;
+        private Visibility _avgCalendarVisible = Visibility.Visible;
         private Visibility _avgRetryInitButtonVisible = Visibility.Collapsed;
 
         // ---------------------------------------------------------------------------------------------------------------
@@ -150,8 +150,6 @@ namespace KursyWalut.Page
                 AvgRetryInitButtonVisible = !value ? Visibility.Visible : Visibility.Collapsed;
             }
         }
-
-        public bool InitDoneSet => !AvgCalendarVisible.Equals(AvgRetryInitButtonVisible);
 
         // ---------------------------------------------------------------------------------------------------------------
 
