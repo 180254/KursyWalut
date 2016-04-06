@@ -11,7 +11,6 @@ using Windows.UI.Xaml.Input;
 using Windows.UI.Xaml.Navigation;
 using KursyWalut.Helper;
 using KursyWalut.Model;
-using WinRTXamlToolkit.Controls.DataVisualization.Charting;
 
 // The Blank Page item template is documented at http://go.microsoft.com/fwlink/?LinkId=402352&clcid=0x409
 
@@ -168,12 +167,6 @@ namespace KursyWalut.Page
             {
                 _historyDrawn = false;
                 Vm.HisErList = null;
-
-                // remove whole chart, and be empty space again - render hack
-                var series = HisChart.Series[0];
-                (series as LineSeries)?.Points?.Clear();
-                HisChart.Series.Remove(series);
-                HisChart.Series.Add(series);
             }
 
             // restore history pivot
@@ -208,8 +201,7 @@ namespace KursyWalut.Page
                 await h.InitCache();
 
                 var ers = new List<ExchangeRate>();
-
-                var expectedSize = (int) (HisChart.ActualWidth* _scaleFactor);
+                var expectedSize = (int) (HisChart.ActualWidth*_scaleFactor*1.1);
                 await h.ErService.GetExchangeRateAveragedHistory(
                     Vm.HisCurrency, Vm.HisDateFrom.Value, Vm.HisDateTo.Value,
                     ers, expectedSize, h.Progress);

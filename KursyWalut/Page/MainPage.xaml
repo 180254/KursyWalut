@@ -6,8 +6,7 @@
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     mc:Ignorable="d"
 
-    xmlns:v="using:WinRTXamlToolkit.Controls.DataVisualization"
-    xmlns:c="using:WinRTXamlToolkit.Controls.DataVisualization.Charting"
+    xmlns:syncfusion="using:Syncfusion.UI.Xaml.Charts"
     xmlns:converters="using:Cimbalino.Toolkit.Converters"
     DataContext="{Binding Path=Vm, RelativeSource={RelativeSource Mode=Self}}">
 
@@ -96,8 +95,7 @@
             <PivotItem>
                 <PivotItem.Header>
                     <TextBlock Foreground="{Binding PivotForegrounds[1]}">
-                        <Run x:Uid="HisPivotHeader" Text="?" /><Run Text=" " />
-                        <Run Text="{Binding HisCurrency.Code}" />
+                        <Run x:Uid="HisPivotHeader" Text="?" />
                     </TextBlock>
                 </PivotItem.Header>
 
@@ -110,40 +108,33 @@
                         <RowDefinition Height="5" />
                     </Grid.RowDefinitions>
 
-                    <c:Chart x:Name="HisChart" Grid.Row="0">
-                        <c:Chart.LegendStyle>
-                            <Style TargetType="v:Legend">
-                                <Setter Property="Width" Value="0" />
-                            </Style>
-                        </c:Chart.LegendStyle>
+                    <syncfusion:SfChart x:Name="HisChart" Grid.Row="0"
+                                        HorizontalAlignment="Center" VerticalAlignment="Center"
 
-                        <c:Chart.TitleStyle>
-                            <Style TargetType="v:Title">
-                                <Setter Property="Visibility" Value="Collapsed" />
-                            </Style>
-                        </c:Chart.TitleStyle>
+                                        Margin="0,0,9,0">
 
-                        <c:LineSeries ItemsSource="{Binding HisErList}"
-                                      IndependentValuePath="DayDateTimeUtc"
-                                      DependentValuePath="AverageRate">
+                        <syncfusion:SfChart.Header>
+                            <TextBlock>
+                                <Run x:Uid="HisPivotHeader" Text="?" />
+                                <Run Text="{Binding HisCurrency.Code}" />
+                            </TextBlock>
+                        </syncfusion:SfChart.Header>
 
-                            <c:LineSeries.DataPointStyle>
-                                <Style TargetType="c:LineDataPoint">
-                                    <Setter Property="BorderThickness" Value="0" />
-                                    <Setter Property="IsTabStop" Value="False" />
-                                    <Setter Property="Width" Value="0" />
-                                    <Setter Property="Height" Value="0" />
-                                    <Setter Property="Template">
-                                        <Setter.Value>
-                                            <ControlTemplate TargetType="c:LineDataPoint">
-                                                <Grid x:Name="Root" Opacity="0" />
-                                            </ControlTemplate>
-                                        </Setter.Value>
-                                    </Setter>
-                                </Style>
-                            </c:LineSeries.DataPointStyle>
-                        </c:LineSeries>
-                    </c:Chart>
+                        <syncfusion:FastLineSeries ItemsSource="{Binding HisErList}"
+                                                   XBindingPath="DayDateTimeUtc"
+                                                   YBindingPath="AverageRate"
+                                                   EnableAnimation="True" AnimationDuration="00:00:00.300" />
+
+                        <syncfusion:SfChart.PrimaryAxis>
+                            <syncfusion:DateTimeCategoryAxis x:Uid="HisChartPrimary"
+                                                             LabelFormat="dd.MM.yy" FontSize="11" />
+                        </syncfusion:SfChart.PrimaryAxis>
+
+                        <syncfusion:SfChart.SecondaryAxis>
+                            <syncfusion:NumericalAxis x:Uid="HisChartSecondary" />
+                        </syncfusion:SfChart.SecondaryAxis>
+
+                    </syncfusion:SfChart>
 
                     <Grid Grid.Row="1" Margin="0,5,0,0">
                         <Grid.RowDefinitions>

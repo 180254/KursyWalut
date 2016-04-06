@@ -120,6 +120,12 @@
   <data name="AvgPivotHeader.Text" xml:space="preserve">
     <value>Średnie kursy walut</value>
   </data>
+  <data name="HisChartPrimary.Header" xml:space="preserve">
+    <value>Data</value>
+  </data>
+  <data name="HisChartSecondary.Header" xml:space="preserve">
+    <value>Średni kurs [zł]</value>
+  </data>
   <data name="HisDateFrom.Text" xml:space="preserve">
     <value>Data początkowa</value>
   </data>
