@@ -61,13 +61,17 @@
                             <DataTemplate>
                                 <Grid>
                                     <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="20" />
                                         <ColumnDefinition Width="3*" />
                                         <ColumnDefinition Width="7*" />
                                     </Grid.ColumnDefinitions>
 
-                                    <TextBlock Grid.Column="0"
-                                               Text="{Binding Currency.Code}" />
+                                    <Image Grid.Column="0"
+                                           Source="{Binding Path=Currency.Code, Converter={StaticResource StringFormatConverter}, ConverterParameter='{}../Flags/{0}.GIF'}"
+                                           Height="11" Width="16" HorizontalAlignment="Left"/>
                                     <TextBlock Grid.Column="1"
+                                               Text="{Binding Currency.Code}" />
+                                    <TextBlock Grid.Column="2"
                                                Text="{Binding Path=AverageRate, Converter={StaticResource StringFormatConverter}, ConverterParameter='{}{0:0.000}'}" />
                                 </Grid>
                             </DataTemplate>
