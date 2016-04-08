@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Diagnostics;
 using System.Threading.Tasks;
 using KursyWalut.Cache;
 using KursyWalut.Progress;
@@ -11,11 +10,15 @@ namespace KursyWalut.Helper
     public class ProviderHelper
     {
         private readonly IErService _erService;
+
+        private readonly int _progressMax;
         private readonly EventHandler<int> _progressSubscriber;
+
         private bool _cacheAlreadyInit;
 
-        public ProviderHelper(ICache cache, EventHandler<int> progressSubscriber)
+        public ProviderHelper(ICache cache, int progressMax, EventHandler<int> progressSubscriber)
         {
+            _progressMax = progressMax;
             _progressSubscriber = progressSubscriber;
 
             var nbpProvider = new NbpErProvider(cache);
@@ -40,7 +43,7 @@ namespace KursyWalut.Helper
                 _providerHelper = providerHelper;
                 ErService = _providerHelper._erService;
 
-                _pprogress = PProgress.NewMaster();
+                _pprogress = new PProgress(providerHelper._progressMax);
                 _pprogress.ProgressChanged += providerHelper._progressSubscriber;
 //                _pprogress.ProgressChanged += (sender, i) => Debug.WriteLine("progress-{0}", i);
 

@@ -32,27 +32,6 @@ namespace KursyWalut
                 WindowsCollectors.Session);
             InitializeComponent();
             Suspending += OnSuspending;
-
-//            var progress = PProgress.NewMaster();
-//            var cache = CacheHelper.GetStandard();
-//
-//            var nbpProvider = new NbpExchangeRatesProvider(cache, progress);
-//            var cacheProvider = new CacheExchangeRateProvider(nbpProvider, cache, progress);
-//            var erService = new StandardExchangeRateService(cacheProvider);
-//
-//            var ints = new List<int>();
-//            var progress1 = PProgress.NewMaster();
-//            progress1.ProgressChanged += (sender, i) => ints.Add(i);
-//
-//            var er = erService.GetExchangeRateHistory(Currency.DummyForCode("USD"), DateTime.Now.AddYears(-1), DateTime.Now.AddDays(-1), progress1);
-//            er.Wait();
-//
-//            Debug.Write("Progress-");
-//            foreach (var i in ints)
-//            {
-//                Debug.Write(i+",");
-//            }
-
         }
 
         /// <summary>
@@ -62,6 +41,7 @@ namespace KursyWalut
         /// <param name="e">Details about the launch request and process.</param>
         protected override void OnLaunched(LaunchActivatedEventArgs e)
         {
+            Debug.WriteLine("Launching");
 #if DEBUG
             if (Debugger.IsAttached)
             {
@@ -82,7 +62,8 @@ namespace KursyWalut
 
                 if (e.PreviousExecutionState == ApplicationExecutionState.Terminated)
                 {
-                    //TODO: Load state from previously suspended application
+                    // Load state from previously suspended application
+                    // Done In MainPage
                 }
 
                 // Place the frame in the current Window
@@ -120,8 +101,10 @@ namespace KursyWalut
         private void OnSuspending(object sender, SuspendingEventArgs e)
         {
             var deferral = e.SuspendingOperation.GetDeferral();
-//            Debug.WriteLine("SUSPENDING");
-            //TODO: Save application state and stop any background activity
+            Debug.WriteLine("Suspending.");
+
+            // Save application state and stop any background activity
+            // Done in Main Page.
             deferral.Complete();
         }
     }

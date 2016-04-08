@@ -71,10 +71,5 @@ namespace KursyWalut.Progress
         {
             return (int) (MaxValue*percent);
         }
-
-        public static IPProgress NewMaster()
-        {
-            return new PProgress(10000);
-        }
     }
 }

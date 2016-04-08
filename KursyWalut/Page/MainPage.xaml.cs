@@ -1,14 +1,20 @@
 ﻿using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Threading;
+using System.Threading.Tasks;
+using Windows.ApplicationModel;
 using Windows.ApplicationModel.Resources;
 using Windows.Graphics.Display;
+using Windows.Storage;
 using Windows.UI.Core;
 using Windows.UI.Popups;
 using Windows.UI.Xaml;
 using Windows.UI.Xaml.Controls;
 using Windows.UI.Xaml.Input;
 using Windows.UI.Xaml.Navigation;
+using KursyWalut.Extensions;
 using KursyWalut.Helper;
 using KursyWalut.Model;
 
@@ -21,48 +27,81 @@ namespace KursyWalut.Page
     /// </summary>
     public sealed partial class MainPage
     {
+        private readonly PropertySetHelper _localSettings;
+        private readonly ConcurrentQueue<Task> _taskQueue;
+        private readonly CancellationTokenSource _taskCts;
+
         private readonly ResourceLoader _res;
         private readonly double _scaleFactor;
+
         private readonly EventHandler<int> _progressSubscriber;
         private readonly ProviderHelper _providerHelper;
+
         private object _historyPivotBackup;
         private bool _historyDrawn;
 
         public MainPage()
         {
             Vm = new MainPageVm();
+            _localSettings = new PropertySetHelper(ApplicationData.Current.LocalSettings.Values);
+            _taskQueue = new FixedSizedQueue<Task>(1);
+            _taskCts = new CancellationTokenSource();
+
             InitializeComponent();
+            Application.Current.Suspending += OnSuspending;
+            Application.Current.UnhandledException += OnUnhandledException;
+            SystemNavigationManager.GetForCurrentView().BackRequested += OnBackRequested;
+
+            _res = ResourceLoader.GetForCurrentView();
+            _scaleFactor = DisplayInformation.GetForCurrentView().RawPixelsPerViewPixel;
 
             // initialize provider helper
             var cache = CacheHelper.GetStandardLsc();
             _progressSubscriber = (sender, i) => Vm.Progress = i;
-            _providerHelper = new ProviderHelper(cache, _progressSubscriber);
+            _providerHelper = new ProviderHelper(cache, Vm.ProgressMax, _progressSubscriber);
 
-            // remove "history" pivot
-            _historyPivotBackup = MainPivot.Items?[1];
-            MainPivot.Items?.RemoveAt(1);
-
-            _res = ResourceLoader.GetForCurrentView();
-            _scaleFactor = DisplayInformation.GetForCurrentView().RawPixelsPerViewPixel;
-            SystemNavigationManager.GetForCurrentView().BackRequested += OnBackRequested;
-            Application.Current.UnhandledException += OnUnhandledException;
+            // ReSharper disable once InvertIf
+            if (_localSettings.GetValue(nameof(MainPivot), 0) == 0)
+            {
+                // remove "history" pivot
+                _historyPivotBackup = MainPivot.Items?[1];
+                MainPivot.Items?.RemoveAt(1);
+            }
         }
 
         public MainPageVm Vm { get; }
 
-        protected override void OnNavigatedTo(NavigationEventArgs e)
+        protected override async void OnNavigatedTo(NavigationEventArgs e)
         {
             base.OnNavigatedTo(e);
-            AvgInit();
+            await Do(AvgInit());
         }
 
         // ---------------------------------------------------------------------------------------------------------------
 
-        private async void AvgInit()
+        private void MainPivot_OnSelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            var historyPivotSelected = MainPivot.SelectedIndex == 1;
+            Vm.HisSaveEnabled = historyPivotSelected && _historyDrawn;
+
+            Vm.RotatePivotForegrounds();
+        }
+
+        // ---------------------------------------------------------------------------------------------------------------
+
+        private async void AvgRetryInitButton_OnClick(object sender, RoutedEventArgs e)
+        {
+            await Do(AvgInit());
+        }
+
+        // ---------------------------------------------------------------------------------------------------------------
+
+        private async Task AvgInit()
         {
 #if DEBUG
             var sw = Stopwatch.StartNew();
 #endif
+
             Vm.ChangesEnabled = false;
 
             using (var h = _providerHelper.Helper())
@@ -75,10 +114,17 @@ namespace KursyWalut.Page
 
                 var lastProgress = h.Progress.SubPercent(0.05, 0.10);
                 var lastAvailableDay = await h.ErService.GetLastAvailableDay(lastProgress);
-                Vm.AvgDate = lastAvailableDay;
-                Vm.HisDateFrom = lastAvailableDay.AddYears(-1);
-                Vm.HisDateTo = lastAvailableDay;
+                Vm.AvgDate = _localSettings.GetValue(nameof(Vm.AvgDate), lastAvailableDay);
+                Vm.HisDateFrom = _localSettings.GetValue(nameof(Vm.HisDateFrom), lastAvailableDay.AddYears(-1));
+                Vm.HisDateTo = _localSettings.GetValue(nameof(Vm.HisDateTo), lastAvailableDay);
                 Vm.HisDateToMax = lastAvailableDay;
+
+                var hisCurrencyCode = _localSettings.GetValue<string>(nameof(Vm.HisCurrency));
+                if (hisCurrencyCode != null)
+                {
+                    Vm.HisCurrency = Currency.DummyForCode(hisCurrencyCode);
+                    MainPivot.SelectedIndex = 1;
+                }
 
                 var erProgress = h.Progress.SubPercent(0.10, 0.50);
                 Vm.AvgErList = await h.ErService.GetExchangeRates(lastAvailableDay, erProgress);
@@ -97,14 +143,19 @@ namespace KursyWalut.Page
 #endif
         }
 
-
         // ---------------------------------------------------------------------------------------------------------------
 
         private async void AvgReload(DateTimeOffset date)
         {
+            await Do(AvgReload_Int(date));
+        }
+
+        private async Task AvgReload_Int(DateTimeOffset date)
+        {
 #if DEBUG
             var sw = Stopwatch.StartNew();
 #endif
+
             Vm.ChangesEnabled = false;
 
             using (var h = _providerHelper.Helper())
@@ -183,7 +234,36 @@ namespace KursyWalut.Page
 
         // ---------------------------------------------------------------------------------------------------------------
 
+        private void HisDateFromPicker_OnDateChanged(
+            CalendarDatePicker sender,
+            CalendarDatePickerDateChangedEventArgs e)
+        {
+            if ((e.NewDate != null) && (e.NewDate?.Date != e.OldDate?.Date))
+            {
+                Vm.HisDateFrom = e.NewDate.Value.Date;
+            }
+        }
+
+        // ---------------------------------------------------------------------------------------------------------------
+
+        private void HitDateToPicker_OnDateChanged(
+            CalendarDatePicker sender,
+            CalendarDatePickerDateChangedEventArgs e)
+        {
+            if ((e.NewDate != null) && (e.NewDate?.Date != e.OldDate?.Date))
+            {
+                Vm.HisDateTo = e.NewDate.Value.Date;
+            }
+        }
+
+        // ---------------------------------------------------------------------------------------------------------------
+
         private async void HisDraw_OnClick(object sender, RoutedEventArgs e)
+        {
+            await Do(HisDraw_OnClick_Int());
+        }
+
+        private async Task HisDraw_OnClick_Int()
         {
 #if DEBUG
             var sw = Stopwatch.StartNew();
@@ -225,31 +305,12 @@ namespace KursyWalut.Page
 
         // ---------------------------------------------------------------------------------------------------------------
 
-        private void HisDateFromPicker_OnDateChanged(
-            CalendarDatePicker sender,
-            CalendarDatePickerDateChangedEventArgs e)
-        {
-            if ((e.NewDate != null) && (e.NewDate?.Date != e.OldDate?.Date))
-            {
-                Vm.HisDateFrom = e.NewDate.Value.Date;
-            }
-        }
-
-        // ---------------------------------------------------------------------------------------------------------------
-
-        private void HitDateToPicker_OnDateChanged(
-            CalendarDatePicker sender,
-            CalendarDatePickerDateChangedEventArgs e)
-        {
-            if ((e.NewDate != null) && (e.NewDate?.Date != e.OldDate?.Date))
-            {
-                Vm.HisDateTo = e.NewDate.Value.Date;
-            }
-        }
-
-        // ---------------------------------------------------------------------------------------------------------------
-
         private async void HisSaveButton_OnClick(object sender, RoutedEventArgs e)
+        {
+            await Do(HisSaveButton_OnClick_Int());
+        }
+
+        private async Task HisSaveButton_OnClick_Int()
         {
             var suggestedName = string.Format("{0}_{1}-{2}",
                 Vm.HisCurrency.Code,
@@ -258,7 +319,7 @@ namespace KursyWalut.Page
 
             Vm.ChangesEnabled = false;
 
-            using (var h = new UiElementToPngHelper(HisChart, suggestedName, _progressSubscriber))
+            using (var h = new UiToPngFileHelper(HisChart, suggestedName, Vm.ProgressMax, _progressSubscriber))
             {
                 var saved = await h.Execute();
 
@@ -274,12 +335,72 @@ namespace KursyWalut.Page
 
         // ---------------------------------------------------------------------------------------------------------------
 
-        private void MainPivot_OnSelectionChanged(object sender, SelectionChangedEventArgs e)
+        private async void OnSuspending(object sender, SuspendingEventArgs e)
         {
-            var historyPivotSelected = MainPivot.SelectedIndex == 1;
-            Vm.HisSaveEnabled = historyPivotSelected && _historyDrawn;
+            var deferral = e.SuspendingOperation.GetDeferral();
 
-            Vm.RotatePivotForegrounds();
+            Debug.WriteLine("Suspending({0})", typeof (MainPage));
+
+            _localSettings[nameof(MainPivot)] = MainPivot.SelectedIndex;
+            // ReSharper disable once SwitchStatementMissingSomeCases
+            switch (MainPivot.SelectedIndex)
+            {
+                case 0:
+                    _localSettings[nameof(Vm.AvgDate)] = Vm.AvgDate;
+                    break;
+                case 1:
+                    _localSettings[nameof(Vm.HisDateFrom)] = Vm.HisDateFrom;
+                    _localSettings[nameof(Vm.HisDateTo)] = Vm.HisDateTo;
+                    _localSettings[nameof(Vm.HisCurrency)] = Vm.HisCurrency.Code;
+                    _localSettings[nameof(_historyDrawn)] = _historyDrawn;
+                    break;
+            }
+
+
+            Task currentTask;
+            // ReSharper disable once InvertIf
+            if (_taskQueue.TryDequeue(out currentTask) && !currentTask.IsCompleted)
+            {
+                // 5% is always for cache flush, cancelling is impossible
+                if (Vm.Progress >= Vm.ProgressMax*0.95)
+                {
+                    Debug.WriteLine("Suspending({0}): waiting for cache flush", typeof (MainPage));
+                    await currentTask;
+                }
+                else
+                {
+                    Debug.WriteLine("Suspending({0}): cancelling task", typeof (MainPage));
+                    _taskCts.Cancel();
+                }
+            }
+
+            deferral.Complete();
+        }
+
+        // ---------------------------------------------------------------------------------------------------------------
+
+        private async void OnUnhandledException(object sender, UnhandledExceptionEventArgs e)
+        {
+            e.Handled = true;
+            if (e.Exception is OperationCanceledException)
+                return;
+
+            Vm.Progress = 0;
+            Debug.WriteLine("{0}: {1}", nameof(OnUnhandledException), e.Message);
+            await new MessageDialog(_res.GetString("NoInternet/Text")).ShowAsync();
+
+            AvgList.SelectedItem = null;
+
+            var initSuccessfully = Vm.AvailDates != null;
+            if (!initSuccessfully)
+            {
+                Vm.InitDone = false;
+            }
+            else
+            {
+                Vm.ChangesEnabled = true;
+                Vm.AllDatesRecover();
+            }
         }
 
         // ---------------------------------------------------------------------------------------------------------------
@@ -300,34 +421,12 @@ namespace KursyWalut.Page
 
         // ---------------------------------------------------------------------------------------------------------------
 
-        private async void OnUnhandledException(object sender, UnhandledExceptionEventArgs e)
+        private Task Do(Task task)
         {
-            e.Handled = true;
-            Vm.Progress = 0;
-            await new MessageDialog(_res.GetString("NoInternet/Text")).ShowAsync();
-
-            AvgList.SelectedItem = null;
-
-            var initSuccessfully = Vm.AvailDates != null;
-            if (!initSuccessfully)
-            {
-                Vm.InitDone = false;
-            }
-            else
-            {
-                Vm.ChangesEnabled = true;
-                Vm.AllDatesRecover();
-            }
+            var cancelableTask = task.WithCancellation(_taskCts.Token);
+            _taskQueue.Enqueue(cancelableTask);
+            return cancelableTask;
         }
-
-        // ---------------------------------------------------------------------------------------------------------------
-
-        private void AvgRetryInitButton_OnClick(object sender, RoutedEventArgs e)
-        {
-            AvgInit();
-        }
-
-        // ---------------------------------------------------------------------------------------------------------------
 
         private static void DebugElapsedTime(Stopwatch sw, string methodName)
         {

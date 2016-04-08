@@ -180,8 +180,9 @@
                         <TextBlock x:Uid="HisDraw" Text="?" VerticalAlignment="Center" TextAlignment="Center" />
                     </Button>
 
-                    <ProgressBar Grid.Row="3" Height="15" Margin="0,5,0,0" Minimum="0" Maximum="10000"
-                                 Value="{Binding Progress}" />
+                    <ProgressBar Grid.Row="3" Height="15" Margin="0,5,0,0" Minimum="0"
+                                 Value="{Binding Progress}"
+                                 Maximum="{Binding ProgressMax}" />
                 </Grid>
             </PivotItem>
         </Pivot>

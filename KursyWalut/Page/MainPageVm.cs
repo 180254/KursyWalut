@@ -41,6 +41,7 @@ namespace KursyWalut.Page
 
         private bool _bottomAppBarIsOpen;
         private int _progress;
+        private int _progressMax = 10000;
 
         // ---------------------------------------------------------------------------------------------------------------
 
@@ -150,6 +151,12 @@ namespace KursyWalut.Page
         {
             get { return _progress; }
             set { Set(() => Progress, ref _progress, value); }
+        }
+
+        public int ProgressMax
+        {
+            get { return _progressMax; }
+            set { Set(() => ProgressMax, ref _progressMax, value); }
         }
 
         public bool ChangesEnabled

@@ -10,18 +10,20 @@ using KursyWalut.Progress;
 
 namespace KursyWalut.Helper
 {
-    public class UiElementToPngHelper : IDisposable
+    public class UiToPngFileHelper : IDisposable
     {
         private readonly UIElement _uiElement;
         private readonly string _suggestedName;
         private readonly IPProgress _pprogress;
 
-        public UiElementToPngHelper(UIElement uiElement, string suggestedName, EventHandler<int> progressSubscriber)
+        public UiToPngFileHelper(
+            UIElement uiElement, string suggestedName,
+            int progressMax, EventHandler<int> progressSubscriber)
         {
             _suggestedName = suggestedName;
             _uiElement = uiElement;
 
-            _pprogress = PProgress.NewMaster();
+            _pprogress = new PProgress(progressMax);
             _pprogress.ProgressChanged += progressSubscriber;
             _pprogress.ReportProgress(0.00);
         }
