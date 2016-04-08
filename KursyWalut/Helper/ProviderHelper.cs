@@ -18,12 +18,13 @@ namespace KursyWalut.Helper
 
         public ProviderHelper(ICache cache, int progressMax, EventHandler<int> progressSubscriber)
         {
-            _progressMax = progressMax;
-            _progressSubscriber = progressSubscriber;
-
             var nbpProvider = new NbpErProvider(cache);
             var cacheProvider = new CacheErProvider(nbpProvider, cache);
             _erService = new StandardErService(cacheProvider);
+
+            _progressMax = progressMax;
+            _progressSubscriber = progressSubscriber;
+            _cacheAlreadyInit = false;
         }
 
         public ProviderHelper2 Helper()

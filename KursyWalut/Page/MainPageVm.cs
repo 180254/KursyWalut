@@ -30,7 +30,6 @@ namespace KursyWalut.Page
         private bool _hisActionEnabled;
         private bool _hisSaveEnabled;
 
-
         // ---------------------------------------------------------------------------------------------------------------
 
         private IList<Brush> _pivotForegrounds = new List<Brush>
@@ -206,8 +205,11 @@ namespace KursyWalut.Page
 
         // ---------------------------------------------------------------------------------------------------------------
 
-        // 07 March 2016 Joel Joseph www.joeljoseph.ne
-        // http://www.joeljoseph.net/converting-hex-to-color-in-universal-windows-platform-uwp/
+        /// <summary>
+        ///     "Converting Hex to Color in C# for Universal Windows Platform (UWP)"<br />
+        ///     Credits: 07 March 2016 Joel Joseph www.joeljoseph.ne<br />
+        ///     http://www.joeljoseph.net/converting-hex-to-color-in-universal-windows-platform-uwp/
+        /// </summary>
         private static Brush GetSolidColorBrush(string hex)
         {
             hex = hex.Replace("#", string.Empty);

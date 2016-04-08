@@ -20,8 +20,8 @@ namespace KursyWalut.Helper
             UIElement uiElement, string suggestedName,
             int progressMax, EventHandler<int> progressSubscriber)
         {
-            _suggestedName = suggestedName;
             _uiElement = uiElement;
+            _suggestedName = suggestedName;
 
             _pprogress = new PProgress(progressMax);
             _pprogress.ProgressChanged += progressSubscriber;

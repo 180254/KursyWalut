@@ -150,4 +150,7 @@
   <data name="NoInternetButton.Text" xml:space="preserve">
     <value>Ponów wczytywanie</value>
   </data>
+  <data name="OtherException.Text" xml:space="preserve">
+    <value>Wystąpił problem podczas przetwarzania. Proszę spróbować ponownie. W razie dalszych problemów przeinstaluj aplikację i/lub skontaktuj się z autorem.</value>
+  </data>
 </root>

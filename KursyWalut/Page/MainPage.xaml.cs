@@ -2,6 +2,7 @@
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
 using Windows.ApplicationModel;
@@ -31,7 +32,7 @@ namespace KursyWalut.Page
         private readonly ConcurrentQueue<Task> _taskQueue;
         private readonly CancellationTokenSource _taskCts;
 
-        private readonly ResourceLoader _res;
+        private readonly ResourceLoader _resLoader;
         private readonly double _scaleFactor;
 
         private readonly EventHandler<int> _progressSubscriber;
@@ -52,7 +53,7 @@ namespace KursyWalut.Page
             Application.Current.UnhandledException += OnUnhandledException;
             SystemNavigationManager.GetForCurrentView().BackRequested += OnBackRequested;
 
-            _res = ResourceLoader.GetForCurrentView();
+            _resLoader = ResourceLoader.GetForCurrentView();
             _scaleFactor = DisplayInformation.GetForCurrentView().RawPixelsPerViewPixel;
 
             // initialize provider helper
@@ -61,7 +62,7 @@ namespace KursyWalut.Page
             _providerHelper = new ProviderHelper(cache, Vm.ProgressMax, _progressSubscriber);
 
             // ReSharper disable once InvertIf
-            if (_localSettings.GetValue(nameof(MainPivot), 0) == 0)
+            if (_localSettings.GetValue<string>(nameof(Vm.HisCurrency)) == null)
             {
                 // remove "history" pivot
                 _historyPivotBackup = MainPivot.Items?[1];
@@ -83,7 +84,6 @@ namespace KursyWalut.Page
         {
             var historyPivotSelected = MainPivot.SelectedIndex == 1;
             Vm.HisSaveEnabled = historyPivotSelected && _historyDrawn;
-
             Vm.RotatePivotForegrounds();
         }
 
@@ -121,10 +121,9 @@ namespace KursyWalut.Page
 
                 var hisCurrencyCode = _localSettings.GetValue<string>(nameof(Vm.HisCurrency));
                 if (hisCurrencyCode != null)
-                {
                     Vm.HisCurrency = Currency.DummyForCode(hisCurrencyCode);
-                    MainPivot.SelectedIndex = 1;
-                }
+
+                MainPivot.SelectedIndex = _localSettings.GetValue(nameof(MainPivot), 0);
 
                 var erProgress = h.Progress.SubPercent(0.10, 0.50);
                 Vm.AvgErList = await h.ErService.GetExchangeRates(lastAvailableDay, erProgress);
@@ -326,7 +325,7 @@ namespace KursyWalut.Page
                 if (saved)
                 {
                     Vm.BottomAppBarIsOpen = false;
-                    await new MessageDialog(_res.GetString("HisSaveConfirmation/Text")).ShowAsync();
+                    await new MessageDialog(_resLoader.GetString("HisSaveConfirmation/Text")).ShowAsync();
                 }
             }
 
@@ -342,20 +341,11 @@ namespace KursyWalut.Page
             Debug.WriteLine("Suspending({0})", typeof (MainPage));
 
             _localSettings[nameof(MainPivot)] = MainPivot.SelectedIndex;
-            // ReSharper disable once SwitchStatementMissingSomeCases
-            switch (MainPivot.SelectedIndex)
-            {
-                case 0:
-                    _localSettings[nameof(Vm.AvgDate)] = Vm.AvgDate;
-                    break;
-                case 1:
-                    _localSettings[nameof(Vm.HisDateFrom)] = Vm.HisDateFrom;
-                    _localSettings[nameof(Vm.HisDateTo)] = Vm.HisDateTo;
-                    _localSettings[nameof(Vm.HisCurrency)] = Vm.HisCurrency.Code;
-                    _localSettings[nameof(_historyDrawn)] = _historyDrawn;
-                    break;
-            }
-
+            _localSettings[nameof(Vm.AvgDate)] = Vm.AvgDate;
+            _localSettings[nameof(Vm.HisDateFrom)] = Vm.HisDateFrom;
+            _localSettings[nameof(Vm.HisDateTo)] = Vm.HisDateTo;
+            _localSettings[nameof(Vm.HisCurrency)] = Vm.HisCurrency?.Code;
+            _localSettings[nameof(_historyDrawn)] = _historyDrawn;
 
             Task currentTask;
             // ReSharper disable once InvertIf
@@ -381,13 +371,15 @@ namespace KursyWalut.Page
 
         private async void OnUnhandledException(object sender, UnhandledExceptionEventArgs e)
         {
+            Debug.WriteLine("{0}: {1}", nameof(OnUnhandledException), e.Message);
+
             e.Handled = true;
             if (e.Exception is OperationCanceledException)
                 return;
 
             Vm.Progress = 0;
-            Debug.WriteLine("{0}: {1}", nameof(OnUnhandledException), e.Message);
-            await new MessageDialog(_res.GetString("NoInternet/Text")).ShowAsync();
+            var dialogTextId = e.Exception is IOException ? "NoInternet/Text" : "OtherException/Text";
+            await new MessageDialog(_resLoader.GetString(dialogTextId)).ShowAsync();
 
             AvgList.SelectedItem = null;
 

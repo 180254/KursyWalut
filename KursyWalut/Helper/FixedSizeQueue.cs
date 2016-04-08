@@ -2,11 +2,12 @@
 
 namespace KursyWalut.Helper
 {
-    /**
-     * http://stackoverflow.com/questions/5852863/fixed-size-queue-which-automatically-dequeues-old-values-upon-new-enques
-     * Credits: davel @ http://stackoverflow.com/users/1351615/davel
-     */
-
+    /// <summary>
+    ///     "Fixed size queue which automatically dequeues old values upon new enques." <br />
+    ///     Credits: davel @ stackoverflow.com <br />
+    ///     http://stackoverflow.com/users/1351615/davel <br />
+    ///     http://stackoverflow.com/questions/5852863/fixed-size-queue-which-automatically-dequeues-old-values-upon-new-enques
+    /// </summary>
     public class FixedSizedQueue<T> : ConcurrentQueue<T>
     {
         private readonly object _syncObject = new object();

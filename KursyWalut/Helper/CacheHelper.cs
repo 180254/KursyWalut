@@ -8,6 +8,10 @@ namespace KursyWalut.Helper
 {
     public class CacheHelper
     {
+        /// <summary>
+        ///     ICache implementation - LocalStorageCache with registered all serializers used in this project.
+        /// </summary>
+        /// <returns>ICache</returns>
         public static ICache GetStandardLsc()
         {
             var ses = new SerializersStore();
