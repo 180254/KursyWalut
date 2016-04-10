@@ -84,6 +84,7 @@ namespace KursyWalut.Page
 
         private async void AvgRetryInitButton_OnClick(object sender, RoutedEventArgs e)
         {
+            Vm.InitDone = true;
             await AvgInit();
         }
 
@@ -283,7 +284,6 @@ namespace KursyWalut.Page
             Vm.ChangesEnabled = true;
             Vm.HisSaveEnabled = true;
             Vm.AllDatesBackup();
-
 
 #if DEBUG
             DebugElapsedTime(sw, nameof(HisDraw_OnClick));

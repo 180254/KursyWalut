@@ -187,8 +187,8 @@ namespace KursyWalut.Page
 
         public void HisDatesRecover()
         {
-            _dateBackups[1] = HisDateFrom;
-            _dateBackups[2] = HisDateTo;
+            HisDateFrom = _dateBackups[1];
+            HisDateTo = _dateBackups[2];
         }
 
         public void AllDatesBackup()
