@@ -6,7 +6,7 @@ using KursyWalut.Serializer;
 
 namespace KursyWalut.Helper
 {
-    public class CacheHelper
+    public static class CacheHelper
     {
         /// <summary>
         ///     ICache implementation - LocalStorageCache with registered all serializers used in this project.
