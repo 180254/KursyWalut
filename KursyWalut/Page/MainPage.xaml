@@ -119,7 +119,7 @@
 
                     <syncfusion:SfChart x:Name="HisChart" Grid.Row="0"
                                         HorizontalAlignment="Center" VerticalAlignment="Center"
-                                        Margin="0,0,9,0">
+                                        Margin="0,0,10,0">
 
                         <syncfusion:SfChart.Header>
                             <TextBlock>
@@ -168,7 +168,7 @@
                                             Date="{Binding Path=HisDateFrom, Mode=TwoWay}"
                                             DateChanged="HisDateFromPicker_OnDateChanged"
                                             MinDate="{Binding Path=HisDateFromMin, Mode=TwoWay}"
-                                            MaxDate="{Binding Path=HisDateToMax, Mode=TwoWay}"
+                                            MaxDate="{Binding Path=HisDateTo, Mode=TwoWay}"
                                             IsEnabled="{Binding HisActionEnabled}" />
 
                         <CalendarDatePicker Grid.Row="1" Grid.Column="1" Margin="5,0,0,0" HorizontalAlignment="Stretch"
