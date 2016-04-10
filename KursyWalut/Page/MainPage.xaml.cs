@@ -279,7 +279,7 @@ namespace KursyWalut.Page
                 await new MessageDialog(_resLoader.GetString("NoSuchHistory/Text")).ShowAsync();
             }
 
-            _historyDrawn = true;
+            _historyDrawn = ers.Count > 0;
             Vm.ChangesEnabled = true;
             Vm.HisSaveEnabled = true;
             Vm.AllDatesBackup();
