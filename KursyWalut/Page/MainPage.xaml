@@ -105,6 +105,7 @@
                 <PivotItem.Header>
                     <TextBlock Foreground="{Binding PivotForegrounds[1]}">
                         <Run x:Uid="HisPivotHeader" Text="?" />
+                        <Run Text="{Binding HisCurrency.Code}" />
                     </TextBlock>
                 </PivotItem.Header>
 
