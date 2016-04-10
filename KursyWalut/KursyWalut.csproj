@@ -107,7 +107,6 @@
     <Compile Include="Cache\LocalStorageCache.cs" />
     <Compile Include="Helper\CacheHelper.cs" />
     <Compile Include="Extensions\LinqExtensions.cs" />
-    <Compile Include="Helper\FixedSizeQueue.cs" />
     <Compile Include="Helper\LocalSettingsHelper.cs" />
     <Compile Include="Helper\UiToPngFileHelper.cs" />
     <Compile Include="Serializer\SerializersStore.cs" />
