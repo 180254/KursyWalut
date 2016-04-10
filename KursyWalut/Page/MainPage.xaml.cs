@@ -1,9 +1,7 @@
 ﻿using System;
-using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
-using System.Threading;
 using System.Threading.Tasks;
 using Windows.ApplicationModel;
 using Windows.ApplicationModel.Resources;
@@ -15,7 +13,6 @@ using Windows.UI.Xaml;
 using Windows.UI.Xaml.Controls;
 using Windows.UI.Xaml.Input;
 using Windows.UI.Xaml.Navigation;
-using KursyWalut.Extensions;
 using KursyWalut.Helper;
 using KursyWalut.Model;
 
@@ -29,9 +26,6 @@ namespace KursyWalut.Page
     public sealed partial class MainPage
     {
         private readonly PropertySetHelper _localSettings;
-        private readonly ConcurrentQueue<Task> _taskQueue;
-        private readonly CancellationTokenSource _taskCts;
-
         private readonly ResourceLoader _resLoader;
         private readonly double _scaleFactor;
 
@@ -45,8 +39,6 @@ namespace KursyWalut.Page
         {
             Vm = new MainPageVm();
             _localSettings = new PropertySetHelper(ApplicationData.Current.LocalSettings.Values);
-            _taskQueue = new FixedSizedQueue<Task>(1);
-            _taskCts = new CancellationTokenSource();
 
             InitializeComponent();
             Application.Current.Suspending += OnSuspending;
@@ -75,7 +67,7 @@ namespace KursyWalut.Page
         protected override async void OnNavigatedTo(NavigationEventArgs e)
         {
             base.OnNavigatedTo(e);
-            await Do(AvgInit());
+            await AvgInit();
         }
 
         // ---------------------------------------------------------------------------------------------------------------
@@ -91,7 +83,7 @@ namespace KursyWalut.Page
 
         private async void AvgRetryInitButton_OnClick(object sender, RoutedEventArgs e)
         {
-            await Do(AvgInit());
+            await AvgInit();
         }
 
         // ---------------------------------------------------------------------------------------------------------------
@@ -136,7 +128,6 @@ namespace KursyWalut.Page
 
             Vm.ChangesEnabled = true;
             Vm.AllDatesBackup();
-
 #if DEBUG
             DebugElapsedTime(sw, nameof(AvgInit));
 #endif
@@ -145,11 +136,6 @@ namespace KursyWalut.Page
         // ---------------------------------------------------------------------------------------------------------------
 
         private async void AvgReload(DateTimeOffset date)
-        {
-            await Do(AvgReload_Int(date));
-        }
-
-        private async Task AvgReload_Int(DateTimeOffset date)
         {
 #if DEBUG
             var sw = Stopwatch.StartNew();
@@ -259,11 +245,6 @@ namespace KursyWalut.Page
 
         private async void HisDraw_OnClick(object sender, RoutedEventArgs e)
         {
-            await Do(HisDraw_OnClick_Int());
-        }
-
-        private async Task HisDraw_OnClick_Int()
-        {
 #if DEBUG
             var sw = Stopwatch.StartNew();
 #endif
@@ -306,11 +287,6 @@ namespace KursyWalut.Page
 
         private async void HisSaveButton_OnClick(object sender, RoutedEventArgs e)
         {
-            await Do(HisSaveButton_OnClick_Int());
-        }
-
-        private async Task HisSaveButton_OnClick_Int()
-        {
             var suggestedName = string.Format("{0}_{1}-{2}",
                 Vm.HisCurrency.Code,
                 Vm.HisDateFrom?.ToString("ddMMyy") ?? "?",
@@ -334,35 +310,17 @@ namespace KursyWalut.Page
 
         // ---------------------------------------------------------------------------------------------------------------
 
-        private async void OnSuspending(object sender, SuspendingEventArgs e)
+        private void OnSuspending(object sender, SuspendingEventArgs e)
         {
             var deferral = e.SuspendingOperation.GetDeferral();
 
             Debug.WriteLine("Suspending({0})", typeof (MainPage));
-
             _localSettings[nameof(MainPivot)] = MainPivot.SelectedIndex;
             _localSettings[nameof(Vm.AvgDate)] = Vm.AvgDate;
             _localSettings[nameof(Vm.HisDateFrom)] = Vm.HisDateFrom;
             _localSettings[nameof(Vm.HisDateTo)] = Vm.HisDateTo;
             _localSettings[nameof(Vm.HisCurrency)] = Vm.HisCurrency?.Code;
             _localSettings[nameof(_historyDrawn)] = _historyDrawn;
-
-            Task currentTask;
-            // ReSharper disable once InvertIf
-            if (_taskQueue.TryDequeue(out currentTask) && !currentTask.IsCompleted)
-            {
-                // 5% is always for cache flush, cancelling is impossible
-                if (Vm.Progress >= Vm.ProgressMax*0.95)
-                {
-                    Debug.WriteLine("Suspending({0}): waiting for cache flush", typeof (MainPage));
-                    await currentTask;
-                }
-                else
-                {
-                    Debug.WriteLine("Suspending({0}): cancelling task", typeof (MainPage));
-                    _taskCts.Cancel();
-                }
-            }
 
             deferral.Complete();
         }
@@ -372,10 +330,7 @@ namespace KursyWalut.Page
         private async void OnUnhandledException(object sender, UnhandledExceptionEventArgs e)
         {
             Debug.WriteLine("{0}: {1}", nameof(OnUnhandledException), e.Message);
-
             e.Handled = true;
-            if (e.Exception is OperationCanceledException)
-                return;
 
             Vm.Progress = 0;
             var dialogTextId = e.Exception is IOException ? "NoInternet/Text" : "OtherException/Text";
@@ -412,13 +367,6 @@ namespace KursyWalut.Page
         }
 
         // ---------------------------------------------------------------------------------------------------------------
-
-        private Task Do(Task task)
-        {
-            var cancelableTask = task.WithCancellation(_taskCts.Token);
-            _taskQueue.Enqueue(cancelableTask);
-            return cancelableTask;
-        }
 
         private static void DebugElapsedTime(Stopwatch sw, string methodName)
         {

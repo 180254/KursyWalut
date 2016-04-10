@@ -105,7 +105,6 @@
     <Compile Include="Cache\ICache.cs" />
     <Compile Include="Cache\InMemCache.cs" />
     <Compile Include="Cache\LocalStorageCache.cs" />
-    <Compile Include="Extensions\TaskExtensions.cs" />
     <Compile Include="Helper\CacheHelper.cs" />
     <Compile Include="Extensions\LinqExtensions.cs" />
     <Compile Include="Helper\FixedSizeQueue.cs" />

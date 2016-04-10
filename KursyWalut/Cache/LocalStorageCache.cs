@@ -26,9 +26,16 @@ namespace KursyWalut.Cache
 
             Debug.WriteLine("Cache-{0}-{1}-{2}", nameof(Get), key, (await file.GetSizeAsync()).GetSizeString());
 
-            using (var fileReadStream = await file.OpenStreamForReadAsync())
+            try
             {
-                return Deserialize<T>(fileReadStream);
+                using (var fileReadStream = await file.OpenStreamForReadAsync())
+                {
+                    return Deserialize<T>(fileReadStream);
+                }
+            }
+            catch (InvalidCastException)
+            {
+                return default(T);
             }
         }
 
