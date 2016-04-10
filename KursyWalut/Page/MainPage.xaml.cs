@@ -13,6 +13,7 @@ using Windows.UI.Xaml;
 using Windows.UI.Xaml.Controls;
 using Windows.UI.Xaml.Input;
 using Windows.UI.Xaml.Navigation;
+using Cimbalino.Toolkit.Extensions;
 using KursyWalut.Helper;
 using KursyWalut.Model;
 
@@ -256,11 +257,11 @@ namespace KursyWalut.Page
 
             Vm.ChangesEnabled = false;
 
+            var ers = new List<ExchangeRate>();
             using (var h = _providerHelper.Helper())
             {
                 await h.InitCache();
 
-                var ers = new List<ExchangeRate>();
                 var expectedSize = (int) (HisChart.ActualWidth*_scaleFactor*1.1);
                 await h.ErService.GetExchangeRateAveragedHistory(
                     Vm.HisCurrency, Vm.HisDateFrom.Value, Vm.HisDateTo.Value,
@@ -273,10 +274,16 @@ namespace KursyWalut.Page
                 await h.FlushCache();
             }
 
+            if (ers.IsEmpty())
+            {
+                await new MessageDialog(_resLoader.GetString("NoSuchHistory/Text")).ShowAsync();
+            }
+
             _historyDrawn = true;
             Vm.ChangesEnabled = true;
             Vm.HisSaveEnabled = true;
             Vm.AllDatesBackup();
+
 
 #if DEBUG
             DebugElapsedTime(sw, nameof(HisDraw_OnClick));
