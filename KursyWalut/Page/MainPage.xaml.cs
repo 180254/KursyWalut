@@ -391,13 +391,13 @@ namespace KursyWalut.Page
             {
                 await h.InitCache();
 
-                var firstProgress = h.Progress.SubPercent(0.00, 0.05);
+                var firstProgress = h.Progress.SubPercent(0.00, 0.01);
                 var firstAvailableDay = await h.ErService.GetFirstAvailableDay(firstProgress);
 
-                var lastProgress = h.Progress.SubPercent(0.05, 0.10);
+                var lastProgress = h.Progress.SubPercent(0.01, 0.02);
                 var lastAvailableDay = await h.ErService.GetLastAvailableDay(lastProgress);
 
-                var avgProgress = h.Progress.SubPercent(0.10, 0.15);
+                var avgProgress = h.Progress.SubPercent(0.02, 0.05);
                 Vm.AvgErList = await h.ErService.GetExchangeRates(lastAvailableDay, avgProgress);
 
                 Vm.HisDateFrom = lastAvailableDay.AddYears(-1);
@@ -405,7 +405,7 @@ namespace KursyWalut.Page
                 Vm.HisErList = new List<ExchangeRate>();
                 _historyDrawn = false;
 
-                var hisProgress = h.Progress.SubPercent(0.15, 1.00);
+                var hisProgress = h.Progress.SubPercent(0.05, 1.00);
                 await h.ErService.GetExchangeRateAveragedHistory(
                     Currency.DummyForCode("USD"), firstAvailableDay, lastAvailableDay,
                     ers, int.MaxValue, hisProgress);
