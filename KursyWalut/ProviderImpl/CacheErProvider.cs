@@ -17,10 +17,14 @@ namespace KursyWalut.ProviderImpl
         private IDictionary<int, IList<DateTimeOffset>> _yearToDays;
         private IDictionary<DateTimeOffset, IList<ExchangeRate>> _dayToEr;
 
+        private readonly IDictionary<string, bool> _cacheChanged = new Dictionary<string, bool>();
+
         public CacheErProvider(IErProvider exchangeRatesProvider, ICache cache)
         {
             _exchangeRatesProvider = exchangeRatesProvider;
             _cache = cache;
+
+            ResetCacheChanges();
         }
 
         public async Task InitCache(IPProgress p)
@@ -47,41 +51,51 @@ namespace KursyWalut.ProviderImpl
 
         public async Task FlushCache(IPProgress p)
         {
-            await _cache.Store(nameof(_availYears), _availYears);
+            if (_cacheChanged[nameof(_availYears)])
+                await _cache.Store(nameof(_availYears), _availYears);
             p.ReportProgress(0.10);
 
-            await _cache.Store(nameof(_yearToDays), _yearToDays);
+            if (_cacheChanged[nameof(_yearToDays)])
+                await _cache.Store(nameof(_yearToDays), _yearToDays);
             p.ReportProgress(0.20);
 
-            await _cache.Store(nameof(_dayToEr), _dayToEr);
+            if (_cacheChanged[nameof(_dayToEr)])
+                await _cache.Store(nameof(_dayToEr), _dayToEr);
             p.ReportProgress(0.50);
 
             var flushCache = (_exchangeRatesProvider as ICacheable)?.FlushCache(p.SubPercent(0.50, 1.00));
             if (flushCache != null)
                 await flushCache;
 
+            ResetCacheChanges();
             p.ReportProgress(1.00);
         }
 
         public async Task<IList<int>> GetAvailableYears(IPProgress p)
         {
-            return _availYears ?? (_availYears = await _exchangeRatesProvider.GetAvailableYears(p));
+            return _availYears ?? (_availYears = await CalculateAvailableYears(p));
         }
 
         public async Task<IList<DateTimeOffset>> GetAvailableDays(int year, IPProgress p)
         {
-            return await GetOrCalculate(_yearToDays, year,
+            return await GetOrCalculate(nameof(_yearToDays), _yearToDays, year,
                 () => _exchangeRatesProvider.GetAvailableDays(year, p), p);
         }
 
         public async Task<IList<ExchangeRate>> GetExchangeRates(DateTimeOffset day, IPProgress p)
         {
-            return await GetOrCalculate(_dayToEr, day,
+            return await GetOrCalculate(nameof(_dayToEr), _dayToEr, day,
                 () => _exchangeRatesProvider.GetExchangeRates(day, p), p);
         }
 
-        private static async Task<TV> GetOrCalculate<TK, TV>(
-            IDictionary<TK, TV> dict,
+        private async Task<IList<int>> CalculateAvailableYears(IPProgress p)
+        {
+            _cacheChanged[nameof(_availYears)] = true;
+            return await _exchangeRatesProvider.GetAvailableYears(p);
+        }
+
+        private async Task<TV> GetOrCalculate<TK, TV>(
+            string dictName, IDictionary<TK, TV> dict,
             TK key, Func<Task<TV>> valueSup,
             IPProgress p)
         {
@@ -91,9 +105,17 @@ namespace KursyWalut.ProviderImpl
                 return dict[key];
             }
 
+            _cacheChanged[dictName] = true;
             var value = await valueSup.Invoke();
             dict.Add(key, value);
             return value;
+        }
+
+        private void ResetCacheChanges()
+        {
+            _cacheChanged[nameof(_availYears)] = false;
+            _cacheChanged[nameof(_yearToDays)] = false;
+            _cacheChanged[nameof(_dayToEr)] = false;
         }
     }
 }

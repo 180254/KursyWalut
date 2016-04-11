@@ -24,6 +24,7 @@ namespace KursyWalut.ProviderImpl
 
         private readonly ICache _cache;
         private IDictionary<DateTimeOffset, string> _dayToFilename;
+        private bool _dayToFilenameChanged;
 
         // ---------------------------------------------------------------------------------------------------------------
 
@@ -48,7 +49,10 @@ namespace KursyWalut.ProviderImpl
 
         public async Task FlushCache(IPProgress p)
         {
-            await _cache.Store(nameof(_dayToFilename), _dayToFilename);
+            if (_dayToFilenameChanged)
+                await _cache.Store(nameof(_dayToFilename), _dayToFilename);
+
+            _dayToFilenameChanged = false;
             p.ReportProgress(1.00);
         }
 
@@ -134,6 +138,8 @@ namespace KursyWalut.ProviderImpl
 
         private IList<DateTimeOffset> ParseAndCacheDates(IEnumerable<string> filenames)
         {
+            _dayToFilenameChanged = true;
+
             var result = new List<DateTimeOffset>();
             foreach (var filename in filenames)
             {
