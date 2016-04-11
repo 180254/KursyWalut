@@ -34,8 +34,10 @@ namespace KursyWalut.Page
         private readonly EventHandler<int> _progressSubscriber;
         private readonly ProviderHelper _providerHelper;
 
+        private bool _initSuccessfully;
         private object _historyPivotBackup;
         private bool _historyDrawn;
+
 
         public MainPage()
         {
@@ -135,6 +137,7 @@ namespace KursyWalut.Page
 
             Vm.ChangesEnabled = true;
             Vm.AllDatesBackup();
+            _initSuccessfully = true;
 #if DEBUG
             DebugElapsedTime(sw, nameof(AvgInit));
 #endif
@@ -354,8 +357,7 @@ namespace KursyWalut.Page
 
             AvgList.SelectedItem = null;
 
-            var initSuccessfully = Vm.AvailDates != null;
-            if (!initSuccessfully)
+            if (!_initSuccessfully)
             {
                 Vm.InitDone = false;
             }
