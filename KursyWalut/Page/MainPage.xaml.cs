@@ -245,7 +245,7 @@ namespace KursyWalut.Page
             if ((e.NewDate != null) && (e.NewDate?.Date != e.OldDate?.Date))
             {
                 Vm.HisDateTo = e.NewDate.Value.Date;
-                if(!_historyDrawn) Vm.HisDatesBackup();
+                if (!_historyDrawn) Vm.HisDatesBackup();
             }
         }
 
@@ -429,9 +429,11 @@ namespace KursyWalut.Page
 
         private void SetHisErChart(IList<ExchangeRate> ers)
         {
-            (HisChart.Behaviors[0] as ChartZoomPanBehavior)?.Reset();
+            if (HisChart.ActualWidth > 0)
+                (HisChart.Behaviors[0] as ChartZoomPanBehavior)?.Reset();
+
             Vm.HisErList = ers;
-            _historyDrawn = ers != null;
+            _historyDrawn = (ers != null) && !ers.IsEmpty();
         }
     }
 }
