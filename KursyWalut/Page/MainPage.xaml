@@ -93,6 +93,8 @@
                                         Date="{Binding Path=AvgDate, Mode=TwoWay}"
                                         IsEnabled="{Binding AvgActionEnabled}"
                                         CalendarViewDayItemChanging="AvgDatePicker_OnCalendarViewDayItemChanging"
+                                        MinDate="{Binding Path=FirstAvailDate, Mode=TwoWay}"
+                                        MaxDate="{Binding Path=LastAvailDate, Mode=TwoWay}"
                                         DateChanged="AvgDatePicker_OnDateChanged"
                                         Visibility="{Binding AvgCalendarVisible}" />
 

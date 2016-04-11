@@ -107,10 +107,12 @@ namespace KursyWalut.Page
 
                 var firstProgress = h.Progress.SubPercent(0.00, 0.05);
                 var firstAvailableDay = await h.ErService.GetFirstAvailableDay(firstProgress);
+                Vm.FirstAvailDate = firstAvailableDay;
                 Vm.HisDateFromMin = firstAvailableDay;
 
                 var lastProgress = h.Progress.SubPercent(0.05, 0.10);
                 var lastAvailableDay = await h.ErService.GetLastAvailableDay(lastProgress);
+                Vm.LastAvailDate = lastAvailableDay;
                 Vm.AvgDate = _localSettings.GetValue(nameof(Vm.AvgDate), lastAvailableDay);
                 Vm.HisDateFrom = _localSettings.GetValue(nameof(Vm.HisDateFrom), lastAvailableDay.AddYears(-1));
                 Vm.HisDateTo = _localSettings.GetValue(nameof(Vm.HisDateTo), lastAvailableDay);

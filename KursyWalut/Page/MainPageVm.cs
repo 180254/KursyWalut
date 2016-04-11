@@ -11,6 +11,8 @@ namespace KursyWalut.Page
 {
     public class MainPageVm : ViewModelBase
     {
+        private DateTimeOffset _firstAvailDate;
+        private DateTimeOffset _lastAvailDate;
         private DateTimeOffset? _avgDate;
         private IList<ExchangeRate> _avgErList;
         private IList<DateTimeOffset> _availDates;
@@ -44,6 +46,19 @@ namespace KursyWalut.Page
         private int _progressMax = 10000;
 
         // ---------------------------------------------------------------------------------------------------------------
+
+
+        public DateTimeOffset FirstAvailDate
+        {
+            get { return _firstAvailDate; }
+            set { Set(() => FirstAvailDate, ref _firstAvailDate, value); }
+        }
+
+        public DateTimeOffset LastAvailDate
+        {
+            get { return _lastAvailDate; }
+            set { Set(() => LastAvailDate, ref _lastAvailDate, value); }
+        }
 
         public DateTimeOffset? AvgDate
         {
@@ -188,7 +203,7 @@ namespace KursyWalut.Page
 
         public bool HasAvgDateBackup()
         {
-           return _dateBackups[0].HasValue;
+            return _dateBackups[0].HasValue;
         }
 
         public void HisDatesBackup()
