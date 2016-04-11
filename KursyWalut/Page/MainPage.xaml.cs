@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
 using System.IO;
 using System.Threading.Tasks;
 using Windows.ApplicationModel;
@@ -198,11 +199,22 @@ namespace KursyWalut.Page
             }
             else
             {
-                var temp = Vm.AvgDate;
-                Vm.AvgDate = null;
-                Vm.AvgDate = temp;
-                sender.IsCalendarOpen = false;
+                HandleUnselect(sender, e);
             }
+        }
+
+        [SuppressMessage("ReSharper", "SuggestBaseTypeForParameter")]
+        private static void HandleUnselect(
+            CalendarDatePicker sender,
+            CalendarDatePickerDateChangedEventArgs e)
+        {
+            if ((e.NewDate != null) || (e.OldDate == null))
+                return;
+
+            var temp = e.OldDate;
+            sender.Date = null;
+            sender.Date = temp;
+            sender.IsCalendarOpen = false;
         }
 
         // ---------------------------------------------------------------------------------------------------------------
@@ -247,10 +259,7 @@ namespace KursyWalut.Page
             }
             else
             {
-                var temp = Vm.HisDateFrom;
-                Vm.HisDateFrom = null;
-                Vm.HisDateFrom = temp;
-                sender.IsCalendarOpen = false;
+                HandleUnselect(sender, e);
             }
         }
 
@@ -260,19 +269,7 @@ namespace KursyWalut.Page
             CalendarDatePicker sender,
             CalendarDatePickerDateChangedEventArgs e)
         {
-            if ((e.NewDate != null)
-                && (e.NewDate?.Date != e.OldDate?.Date)
-                && !_historyDrawn)
-            {
-                Vm.HisDatesBackup();
-            }
-            else
-            {
-                var temp = Vm.HisDateTo;
-                Vm.HisDateTo = null;
-                Vm.HisDateTo = temp;
-                sender.IsCalendarOpen = false;
-            }
+            HisDateFromPicker_OnDateChanged(sender, e);
         }
 
         // ---------------------------------------------------------------------------------------------------------------
