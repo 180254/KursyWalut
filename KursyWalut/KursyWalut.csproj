@@ -144,7 +144,9 @@
     </AppxManifest>
   </ItemGroup>
   <ItemGroup>
+    <Content Include="Flags\ATS.GIF" />
     <Content Include="Flags\AUD.GIF" />
+    <Content Include="Flags\BEF.GIF" />
     <Content Include="Flags\BGN.GIF" />
     <Content Include="Flags\BRL.GIF" />
     <Content Include="Flags\CAD.GIF" />
@@ -155,25 +157,34 @@
     <Content Include="Flags\CZK.GIF" />
     <Content Include="Flags\DKK.GIF" />
     <Content Include="Flags\EEK.GIF" />
+    <Content Include="Flags\ESP.GIF" />
     <Content Include="Flags\EUR.GIF" />
+    <Content Include="Flags\FIM.GIF" />
+    <Content Include="Flags\FRF.GIF" />
     <Content Include="Flags\GBP.GIF" />
+    <Content Include="Flags\GRD.GIF" />
     <Content Include="Flags\HKD.GIF" />
     <Content Include="Flags\HRK.GIF" />
     <Content Include="Flags\HUF.GIF" />
     <Content Include="Flags\IDR.GIF" />
+    <Content Include="Flags\IEP.GIF" />
     <Content Include="Flags\ILS.GIF" />
     <Content Include="Flags\INR.GIF" />
     <Content Include="Flags\ISK.GIF" />
+    <Content Include="Flags\ITL.GIF" />
     <Content Include="Flags\JPY.GIF" />
     <Content Include="Flags\KRW.GIF" />
     <Content Include="Flags\LTL.GIF" />
+    <Content Include="Flags\LUF.GIF" />
     <Content Include="Flags\LVL.GIF" />
     <Content Include="Flags\MTL.GIF" />
     <Content Include="Flags\MXN.GIF" />
     <Content Include="Flags\MYR.GIF" />
+    <Content Include="Flags\NLG.GIF" />
     <Content Include="Flags\NOK.GIF" />
     <Content Include="Flags\NZD.GIF" />
     <Content Include="Flags\PHP.GIF" />
+    <Content Include="Flags\PTE.GIF" />
     <Content Include="Flags\RON.GIF" />
     <Content Include="Flags\RUB.GIF" />
     <Content Include="Flags\SEK.GIF" />
