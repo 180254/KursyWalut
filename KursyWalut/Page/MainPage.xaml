@@ -6,6 +6,7 @@
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     mc:Ignorable="d"
 
+    xmlns:model="using:KursyWalut.Model"
     xmlns:syncfusion="using:Syncfusion.UI.Xaml.Charts"
     xmlns:converters="using:Cimbalino.Toolkit.Converters"
     DataContext="{Binding Path=Vm, RelativeSource={RelativeSource Mode=Self}}">
@@ -15,7 +16,7 @@
     </Page.Resources>
 
     <Page.BottomAppBar>
-        <AppBar IsOpen="{Binding BottomAppBarIsOpen, Mode=TwoWay}" IsSticky="True">
+        <AppBar IsOpen="{x:Bind Path=Vm.BottomAppBarIsOpen, Mode=TwoWay}" IsSticky="True">
             <Grid Margin="10,2,2,2">
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="Auto" />
@@ -24,12 +25,12 @@
                 </Grid.ColumnDefinitions>
 
                 <AppBarButton x:Uid="CacheAllButton" Grid.Column="0" Icon="ImportAll" Label="?"
-                              IsEnabled="{Binding CacheAllButtonEnabled}"
+                              IsEnabled="{x:Bind Path=Vm.CacheAllButtonEnabled, Mode=OneWay}"
                               VerticalAlignment="Center"
                               Click="CacheAllButton_OnClick" />
 
                 <AppBarButton x:Uid="HisSaveButton" Grid.Column="2" Icon="Save" Label="?"
-                              IsEnabled="{Binding HisSaveEnabled}"
+                              IsEnabled="{x:Bind Path=Vm.HisSaveEnabled, Mode=OneWay}"
                               VerticalAlignment="Center"
                               Click="HisSaveButton_OnClick" />
             </Grid>
@@ -41,7 +42,7 @@
 
             <PivotItem>
                 <PivotItem.Header>
-                    <TextBlock Foreground="{Binding PivotForegrounds[0]}">
+                    <TextBlock Foreground="{x:Bind Path=Vm.PivotForegrounds[0], Mode=OneWay}">
                         <Run x:Uid="AvgPivotHeader" Text="?" />
                     </TextBlock>
                 </PivotItem.Header>
@@ -55,7 +56,8 @@
                     </Grid.RowDefinitions>
 
                     <ListView x:Name="AvgList" Grid.Row="0" Margin="0,5,0,0" SelectionMode="Single"
-                              ItemsSource="{Binding AvgErList}" IsEnabled="{Binding AvgActionEnabled}"
+                              ItemsSource="{x:Bind Path=Vm.AvgErList, Mode=OneWay}"
+                              IsEnabled="{x:Bind Path=Vm.AvgActionEnabled, Mode=OneWay}"
                               Tapped="AvgList_OnTapped">
 
                         <ListView.ItemContainerStyle>
@@ -65,7 +67,7 @@
                         </ListView.ItemContainerStyle>
 
                         <ListView.ItemTemplate>
-                            <DataTemplate>
+                            <DataTemplate x:DataType="model:ExchangeRate">
                                 <Grid>
                                     <Grid.ColumnDefinitions>
                                         <ColumnDefinition Width="20" />
@@ -74,47 +76,46 @@
                                     </Grid.ColumnDefinitions>
 
                                     <Image Grid.Column="0"
-                                           Source="{Binding Path=Currency.Code,
-                                           Converter={StaticResource StringFormatConverter}, ConverterParameter='{}../Flags/{0}.GIF'}"
+                                           Source="{Binding Path=Currency.Code, Converter={StaticResource StringFormatConverter}, ConverterParameter='../Flags/{0}.GIF', Mode=OneWay}"
                                            Height="11" Width="16" HorizontalAlignment="Left" />
 
                                     <TextBlock Grid.Column="1"
-                                               Text="{Binding Currency.Code}" />
+                                               Text="{x:Bind Path=Currency.Code, Mode=OneWay}" />
 
                                     <TextBlock Grid.Column="2"
-                                               Text="{Binding Path=AverageRate,
-                                               Converter={StaticResource StringFormatConverter}, ConverterParameter='{}{0:0.000}'}" />
+                                               Text="{x:Bind Path=AverageRate, Converter={StaticResource StringFormatConverter}, ConverterParameter='{}{0:0.000}', Mode=OneWay}" />
                                 </Grid>
                             </DataTemplate>
                         </ListView.ItemTemplate>
                     </ListView>
 
                     <CalendarDatePicker Grid.Row="1" Height="35" Margin="0,5,0,0" HorizontalAlignment="Stretch"
-                                        Date="{Binding Path=AvgDate, Mode=TwoWay}"
-                                        IsEnabled="{Binding AvgActionEnabled}"
+                                        FirstDayOfWeek="Monday"
+                                        Date="{x:Bind Path=Vm.AvgDate, Mode=TwoWay}"
+                                        IsEnabled="{x:Bind Path=Vm.AvgActionEnabled, Mode=OneWay}"
                                         CalendarViewDayItemChanging="AvgDatePicker_OnCalendarViewDayItemChanging"
-                                        MinDate="{Binding Path=FirstAvailDate, Mode=TwoWay}"
-                                        MaxDate="{Binding Path=LastAvailDate, Mode=TwoWay}"
+                                        MinDate="{x:Bind Path=Vm.FirstAvailDate, Mode=TwoWay}"
+                                        MaxDate="{x:Bind Path=Vm.LastAvailDate, Mode=TwoWay}"
                                         DateChanged="AvgDatePicker_OnDateChanged"
-                                        Visibility="{Binding AvgCalendarVisible}" />
+                                        Visibility="{x:Bind Path=Vm.AvgCalendarVisible, Mode=OneWay}" />
 
                     <Button Grid.Row="1" Height="35" Margin="0,5,0,0" HorizontalAlignment="Stretch"
                             Click="AvgRetryInitButton_OnClick"
-                            Visibility="{Binding AvgRetryInitButtonVisible}">
+                            Visibility="{x:Bind Path=Vm.AvgRetryInitButtonVisible, Mode=OneWay}">
                         <TextBlock x:Uid="NoInternetButton" Text="" />
                     </Button>
 
                     <ProgressBar Grid.Row="2" Height="15" Margin="0,5,0,0"
                                  Minimum="0" Maximum="10000"
-                                 Value="{Binding Progress}" />
+                                 Value="{x:Bind Path=Vm.Progress, Mode=OneWay}" />
                 </Grid>
             </PivotItem>
 
             <PivotItem>
                 <PivotItem.Header>
-                    <TextBlock Foreground="{Binding PivotForegrounds[1]}">
+                    <TextBlock Foreground="{x:Bind Path=Vm.PivotForegrounds[1], Mode=OneWay}">
                         <Run x:Uid="HisPivotHeader" Text="?" />
-                        <Run Text="{Binding HisCurrency.Code}" />
+                        <Run Text="{x:Bind Path=Vm.HisCurrency.Code, Mode=OneWay}" />
                     </TextBlock>
                 </PivotItem.Header>
 
@@ -134,11 +135,11 @@
                         <syncfusion:SfChart.Header>
                             <TextBlock>
                                 <Run x:Uid="HisPivotHeader" Text="?" />
-                                <Run Text="{Binding HisCurrency.Code}" />
+                                <Run Text="{x:Bind Path=Vm.HisCurrency.Code, Mode=OneWay}" />
                             </TextBlock>
                         </syncfusion:SfChart.Header>
 
-                        <syncfusion:FastLineSeries ItemsSource="{Binding HisErList}"
+                        <syncfusion:FastLineSeries ItemsSource="{x:Bind Path=Vm.HisErList, Mode=OneWay}"
                                                    XBindingPath="DayDateTimeUtc"
                                                    YBindingPath="AverageRate"
                                                    EnableAnimation="True" AnimationDuration="00:00:00.400" />
@@ -175,30 +176,32 @@
                                    HorizontalAlignment="Left" VerticalAlignment="Center" />
 
                         <CalendarDatePicker Grid.Row="0" Grid.Column="1" Margin="5,0,0,0" HorizontalAlignment="Stretch"
-                                            Date="{Binding Path=HisDateFrom, Mode=TwoWay}"
+                                            FirstDayOfWeek="Monday"
+                                            Date="{x:Bind Path=Vm.HisDateFrom, Mode=TwoWay}"
                                             DateChanged="HisDateFromPicker_OnDateChanged"
-                                            MinDate="{Binding Path=HisDateFromMin, Mode=TwoWay}"
-                                            MaxDate="{Binding Path=HisDateTo, Mode=TwoWay}"
-                                            IsEnabled="{Binding HisActionEnabled}" />
+                                            MinDate="{x:Bind Path=Vm.HisDateFromMin, Mode=TwoWay}"
+                                            MaxDate="{x:Bind Path=Vm.HisDateTo.Value, Mode=OneWay}"
+                                            IsEnabled="{x:Bind Path=Vm.HisActionEnabled, Mode=OneWay}" />
 
                         <CalendarDatePicker Grid.Row="1" Grid.Column="1" Margin="5,0,0,0" HorizontalAlignment="Stretch"
-                                            Date="{Binding Path=HisDateTo, Mode=TwoWay}"
+                                            FirstDayOfWeek="Monday"
+                                            Date="{x:Bind Path=Vm.HisDateTo, Mode=TwoWay}"
                                             DateChanged="HitDateToPicker_OnDateChanged"
-                                            MinDate="{Binding Path=HisDateFrom, Mode=TwoWay}"
-                                            MaxDate="{Binding Path=HisDateToMax, Mode=TwoWay}"
-                                            IsEnabled="{Binding HisActionEnabled}" />
+                                            MinDate="{x:Bind Path=Vm.HisDateFrom.Value, Mode=OneWay}"
+                                            MaxDate="{x:Bind Path=Vm.HisDateToMax, Mode=TwoWay}"
+                                            IsEnabled="{x:Bind Path=Vm.HisActionEnabled, Mode=OneWay}" />
                     </Grid>
 
                     <Button Grid.Row="2" Height="32" Margin="0,5,0,0" HorizontalAlignment="Stretch"
                             Background="#674E23"
-                            IsEnabled="{Binding HisActionEnabled}"
+                            IsEnabled="{x:Bind Path=Vm.HisActionEnabled, Mode=OneWay}"
                             Click="HisDraw_OnClick">
                         <TextBlock x:Uid="HisDraw" Text="?" VerticalAlignment="Center" TextAlignment="Center" />
                     </Button>
 
                     <ProgressBar Grid.Row="3" Height="15" Margin="0,5,0,0"
                                  Minimum="0" Maximum="10000"
-                                 Value="{Binding Progress}" />
+                                 Value="{x:Bind Path=Vm.Progress, Mode=OneWay}" />
                 </Grid>
             </PivotItem>
         </Pivot>

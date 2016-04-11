@@ -116,9 +116,9 @@ namespace KursyWalut.Page
                 var lastAvailableDay = await h.ErService.GetLastAvailableDay(lastProgress);
                 Vm.LastAvailDate = lastAvailableDay;
                 Vm.AvgDate = _localSettings.GetValue(nameof(Vm.AvgDate), lastAvailableDay);
+                Vm.HisDateToMax = lastAvailableDay;
                 Vm.HisDateFrom = _localSettings.GetValue(nameof(Vm.HisDateFrom), lastAvailableDay.AddYears(-1));
                 Vm.HisDateTo = _localSettings.GetValue(nameof(Vm.HisDateTo), lastAvailableDay);
-                Vm.HisDateToMax = lastAvailableDay;
 
                 var hisCurrencyCode = _localSettings.GetValue<string>(nameof(Vm.HisCurrency));
                 if (hisCurrencyCode != null)
@@ -186,15 +186,22 @@ namespace KursyWalut.Page
             CalendarDatePicker sender,
             CalendarDatePickerDateChangedEventArgs e)
         {
-            // ReSharper disable once InvertIf
-            if ((e.NewDate != null) && Vm.AvgActionEnabled)
-            {
-                Vm.AvgDate = e.NewDate.Value.Date;
+            if (!Vm.AvgActionEnabled)
+                return;
 
+            if (e.NewDate != null)
+            {
                 if (e.NewDate?.Date != e.OldDate?.Date)
                 {
                     AvgReload(e.NewDate.Value.Date);
                 }
+            }
+            else
+            {
+                var temp = Vm.AvgDate;
+                Vm.AvgDate = null;
+                Vm.AvgDate = temp;
+                sender.IsCalendarOpen = false;
             }
         }
 
@@ -232,11 +239,18 @@ namespace KursyWalut.Page
             CalendarDatePicker sender,
             CalendarDatePickerDateChangedEventArgs e)
         {
-            // ReSharper disable once InvertIf
-            if ((e.NewDate != null) && (e.NewDate?.Date != e.OldDate?.Date))
+            if ((e.NewDate != null)
+                && (e.NewDate?.Date != e.OldDate?.Date)
+                && !_historyDrawn)
             {
-                Vm.HisDateFrom = e.NewDate.Value.Date;
-                if (!_historyDrawn) Vm.HisDatesBackup();
+                Vm.HisDatesBackup();
+            }
+            else
+            {
+                var temp = Vm.HisDateFrom;
+                Vm.HisDateFrom = null;
+                Vm.HisDateFrom = temp;
+                sender.IsCalendarOpen = false;
             }
         }
 
@@ -246,11 +260,18 @@ namespace KursyWalut.Page
             CalendarDatePicker sender,
             CalendarDatePickerDateChangedEventArgs e)
         {
-            // ReSharper disable once InvertIf
-            if ((e.NewDate != null) && (e.NewDate?.Date != e.OldDate?.Date))
+            if ((e.NewDate != null)
+                && (e.NewDate?.Date != e.OldDate?.Date)
+                && !_historyDrawn)
             {
-                Vm.HisDateTo = e.NewDate.Value.Date;
-                if (!_historyDrawn) Vm.HisDatesBackup();
+                Vm.HisDatesBackup();
+            }
+            else
+            {
+                var temp = Vm.HisDateTo;
+                Vm.HisDateTo = null;
+                Vm.HisDateTo = temp;
+                sender.IsCalendarOpen = false;
             }
         }
 
