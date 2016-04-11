@@ -39,6 +39,7 @@ namespace KursyWalut.Page
         };
 
         private bool _bottomAppBarIsOpen;
+        private bool _cacheAllButtonEnabled;
         private int _progress;
         private int _progressMax = 10000;
 
@@ -146,6 +147,12 @@ namespace KursyWalut.Page
             set { Set(() => BottomAppBarIsOpen, ref _bottomAppBarIsOpen, value); }
         }
 
+        public bool CacheAllButtonEnabled
+        {
+            get { return _cacheAllButtonEnabled; }
+            set { Set(() => CacheAllButtonEnabled, ref _cacheAllButtonEnabled, value); }
+        }
+
         public int Progress
         {
             get { return _progress; }
@@ -160,7 +167,7 @@ namespace KursyWalut.Page
 
         public bool ChangesEnabled
         {
-            set { AvgActionEnabled = HisActionEnabled = value; }
+            set { CacheAllButtonEnabled = AvgActionEnabled = HisActionEnabled = value; }
         }
 
         public bool InitDone

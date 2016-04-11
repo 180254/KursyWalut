@@ -380,5 +380,46 @@ namespace KursyWalut.Page
             sw.Stop();
             Debug.WriteLine("{0}-time: {1}", methodName, sw.Elapsed.ToString("mm':'ss':'fff"));
         }
+
+        private async void CacheAllButton_OnClick(object sender, RoutedEventArgs e)
+        {
+            Vm.ChangesEnabled = false;
+            Vm.BottomAppBarIsOpen = false;
+
+            var ers = new List<ExchangeRate>();
+            using (var h = _providerHelper.Helper())
+            {
+                await h.InitCache();
+
+                var firstProgress = h.Progress.SubPercent(0.00, 0.05);
+                var firstAvailableDay = await h.ErService.GetFirstAvailableDay(firstProgress);
+
+                var lastProgress = h.Progress.SubPercent(0.05, 0.10);
+                var lastAvailableDay = await h.ErService.GetLastAvailableDay(lastProgress);
+
+                var avgProgress = h.Progress.SubPercent(0.10, 0.15);
+                Vm.AvgErList = await h.ErService.GetExchangeRates(lastAvailableDay, avgProgress);
+
+                Vm.HisDateFrom = lastAvailableDay.AddYears(-1);
+                Vm.HisDateTo = lastAvailableDay;
+                Vm.HisErList = new List<ExchangeRate>();
+                _historyDrawn = false;
+
+                var hisProgress = h.Progress.SubPercent(0.15, 1.00);
+                await h.ErService.GetExchangeRateAveragedHistory(
+                    Currency.DummyForCode("USD"), firstAvailableDay, lastAvailableDay,
+                    ers, int.MaxValue, hisProgress);
+
+                Debug.WriteLine("CacheAll-{0}", ers.Count);
+
+                await h.FlushCache();
+            }
+
+            var msgString = string.Format("{0} [{1}].", _resLoader.GetString("CacheAllInfo/Text"), ers.Count);
+            await new MessageDialog(msgString).ShowAsync();
+
+            Vm.AllDatesBackup();
+            Vm.ChangesEnabled = true;
+        }
     }
 }

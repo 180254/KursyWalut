@@ -120,6 +120,12 @@
   <data name="AvgPivotHeader.Text" xml:space="preserve">
     <value>Średnie kursy walut</value>
   </data>
+  <data name="CacheAllButton.Label" xml:space="preserve">
+    <value>Synchronizuj wszystko</value>
+  </data>
+  <data name="CacheAllInfo.Text" xml:space="preserve">
+    <value>Cache został zsynchronizowany z bazą NBP. Wpisów w pamięci:</value>
+  </data>
   <data name="HisChartPrimary.Header" xml:space="preserve">
     <value>Data</value>
   </data>

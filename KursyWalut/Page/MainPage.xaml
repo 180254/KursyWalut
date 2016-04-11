@@ -18,11 +18,16 @@
         <AppBar IsOpen="{Binding BottomAppBarIsOpen, Mode=TwoWay}" IsSticky="True">
             <Grid Margin="2,2,2,2">
                 <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto" />
                     <ColumnDefinition Width="*" />
                     <ColumnDefinition Width="Auto" />
                 </Grid.ColumnDefinitions>
 
-                <AppBarButton x:Uid="HisSaveButton" Grid.Column="1" Icon="Save" Label="?"
+                <AppBarButton x:Uid="CacheAllButton" Grid.Column="0" Icon="ImportAll" Label="?"
+                              IsEnabled="{Binding CacheAllButtonEnabled}"
+                              Click="CacheAllButton_OnClick" />
+
+                <AppBarButton x:Uid="HisSaveButton" Grid.Column="2" Icon="Save" Label="?"
                               IsEnabled="{Binding HisSaveEnabled}"
                               Click="HisSaveButton_OnClick" />
             </Grid>
