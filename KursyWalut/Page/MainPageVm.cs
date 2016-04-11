@@ -186,6 +186,11 @@ namespace KursyWalut.Page
 
         // ---------------------------------------------------------------------------------------------------------------
 
+        public bool HasAvgDateBackup()
+        {
+           return _dateBackups[0].HasValue;
+        }
+
         public void HisDatesBackup()
         {
             _dateBackups[1] = HisDateFrom;

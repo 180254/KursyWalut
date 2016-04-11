@@ -16,6 +16,7 @@ using Windows.UI.Xaml.Navigation;
 using Cimbalino.Toolkit.Extensions;
 using KursyWalut.Helper;
 using KursyWalut.Model;
+using Syncfusion.UI.Xaml.Charts;
 
 // The Blank Page item template is documented at http://go.microsoft.com/fwlink/?LinkId=402352&clcid=0x409
 
@@ -78,6 +79,9 @@ namespace KursyWalut.Page
             var historyPivotSelected = MainPivot.SelectedIndex == 1;
             Vm.HisSaveEnabled = historyPivotSelected && _historyDrawn;
             Vm.RotatePivotForegrounds();
+
+            if (Vm.HasAvgDateBackup())
+                Vm.AllDatesRecover();
         }
 
         // ---------------------------------------------------------------------------------------------------------------
@@ -95,7 +99,6 @@ namespace KursyWalut.Page
 #if DEBUG
             var sw = Stopwatch.StartNew();
 #endif
-
             Vm.ChangesEnabled = false;
 
             using (var h = _providerHelper.Helper())
@@ -203,8 +206,7 @@ namespace KursyWalut.Page
 
             if (newCurrencySelected)
             {
-                _historyDrawn = false;
-                Vm.HisErList = null;
+                SetHisErChart(null);
             }
 
             // restore history pivot
@@ -225,9 +227,11 @@ namespace KursyWalut.Page
             CalendarDatePicker sender,
             CalendarDatePickerDateChangedEventArgs e)
         {
+            // ReSharper disable once InvertIf
             if ((e.NewDate != null) && (e.NewDate?.Date != e.OldDate?.Date))
             {
                 Vm.HisDateFrom = e.NewDate.Value.Date;
+                if (!_historyDrawn) Vm.HisDatesBackup();
             }
         }
 
@@ -237,9 +241,11 @@ namespace KursyWalut.Page
             CalendarDatePicker sender,
             CalendarDatePickerDateChangedEventArgs e)
         {
+            // ReSharper disable once InvertIf
             if ((e.NewDate != null) && (e.NewDate?.Date != e.OldDate?.Date))
             {
                 Vm.HisDateTo = e.NewDate.Value.Date;
+                if(!_historyDrawn) Vm.HisDatesBackup();
             }
         }
 
@@ -267,7 +273,7 @@ namespace KursyWalut.Page
                 await h.ErService.GetExchangeRateAveragedHistory(
                     Vm.HisCurrency, Vm.HisDateFrom.Value, Vm.HisDateTo.Value,
                     ers, expectedSize, h.Progress);
-                Vm.HisErList = ers;
+                SetHisErChart(ers);
 
                 Debug.WriteLine("{0}-width={1};expectedSize={2};gotSize={3}",
                     nameof(HisDraw_OnClick), (int) HisChart.ActualWidth, expectedSize, ers.Count);
@@ -322,6 +328,7 @@ namespace KursyWalut.Page
             var deferral = e.SuspendingOperation.GetDeferral();
 
             Debug.WriteLine("Suspending({0})", typeof (MainPage));
+            Vm.AllDatesRecover();
             _localSettings[nameof(MainPivot)] = MainPivot.SelectedIndex;
             _localSettings[nameof(Vm.AvgDate)] = Vm.AvgDate;
             _localSettings[nameof(Vm.HisDateFrom)] = Vm.HisDateFrom;
@@ -369,7 +376,6 @@ namespace KursyWalut.Page
             {
                 // change pivot from history to avg
                 MainPivot.SelectedIndex = MainPivot.SelectedIndex - 1;
-                Vm.HisDatesRecover();
             }
         }
 
@@ -402,8 +408,7 @@ namespace KursyWalut.Page
 
                 Vm.HisDateFrom = lastAvailableDay.AddYears(-1);
                 Vm.HisDateTo = lastAvailableDay;
-                Vm.HisErList = new List<ExchangeRate>();
-                _historyDrawn = false;
+                SetHisErChart(null);
 
                 var hisProgress = h.Progress.SubPercent(0.05, 1.00);
                 await h.ErService.GetExchangeRateAveragedHistory(
@@ -420,6 +425,13 @@ namespace KursyWalut.Page
 
             Vm.AllDatesBackup();
             Vm.ChangesEnabled = true;
+        }
+
+        private void SetHisErChart(IList<ExchangeRate> ers)
+        {
+            (HisChart.Behaviors[0] as ChartZoomPanBehavior)?.Reset();
+            Vm.HisErList = ers;
+            _historyDrawn = ers != null;
         }
     }
 }
