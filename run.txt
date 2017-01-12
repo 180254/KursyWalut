@@ -1,5 +1,8 @@
+KursyWalut C# UWP
+
 IDE: Visual Studio 2015+(?)
 It is UWP app, it requires Windows 10.
+It uses NuGet as dependency manager.
 
 1. Add to your IDE new NuGet package source: Syncfusion.
 NuGet configuration is described in Synfusion documentation.
